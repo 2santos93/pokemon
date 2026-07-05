@@ -10,9 +10,9 @@ import {
   isTypeSlug,
   type GenerationId,
   type Locale,
+  type PokemonDetail,
   type PokemonSummary,
   type StatSlug,
-  type TypeSlug,
 } from "@/lib/domain/types";
 import { inBatches } from "./batch";
 import {
@@ -64,30 +64,6 @@ async function loadPokemonIndex(): Promise<PokemonSummary[]> {
 export const getPokemonIndex = unstable_cache(loadPokemonIndex, ["pokemon-index"], {
   revalidate: 60 * 60 * 24,
 });
-
-export interface EvolutionStageMember {
-  id: number;
-  slug: string;
-  name: string;
-  imageUrl: string;
-}
-
-export interface PokemonDetail {
-  id: number;
-  slug: string;
-  name: string;
-  generation: GenerationId;
-  types: TypeSlug[];
-  imageUrl: string;
-  stats: { stat: StatSlug; value: number }[];
-  heightMeters: number;
-  weightKilograms: number;
-  abilities: { slug: string; hidden: boolean }[];
-  genus: Record<Locale, string>;
-  flavorText: Record<Locale, string>;
-  evolutionStages: EvolutionStageMember[][];
-  maxId: number;
-}
 
 function pickLocalized(entries: { text: string; language: string }[], locale: Locale): string {
   const exact = entries.find((entry) => entry.language === locale);
@@ -146,7 +122,8 @@ export async function getPokemonDetail(id: number): Promise<PokemonDetail | null
           imageUrl: officialArtworkUrl(member.id),
         })),
       ),
-      maxId: index.length > 0 ? Math.max(...index.map((p) => p.id)) : id,
+      // index is sorted ascending by construction, so the last entry holds the max id.
+      maxId: index.at(-1)?.id ?? id,
     };
   } catch (error) {
     if (error instanceof PokeApiError && error.status === 404) return null;

@@ -20,12 +20,22 @@ export class PokeApiError extends Error {
   }
 }
 
-async function fetchJson<T>(path: string): Promise<T> {
+async function fetchOnce<T>(path: string): Promise<T> {
   const response = await fetch(`${BASE_URL}${path}`, {
     next: { revalidate: REVALIDATE_SECONDS },
   });
   if (!response.ok) throw new PokeApiError(response.status, path);
   return (await response.json()) as T;
+}
+
+/** Retries once on network errors or 5xx responses; a 404 is a valid answer and is never retried. */
+async function fetchJson<T>(path: string): Promise<T> {
+  try {
+    return await fetchOnce<T>(path);
+  } catch (error) {
+    if (error instanceof PokeApiError && error.status < 500) throw error;
+    return fetchOnce<T>(path);
+  }
 }
 
 export const getGeneration = (id: number): Promise<GenerationResponse> =>

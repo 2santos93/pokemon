@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import type { PokemonDetail } from "@/lib/pokeapi/loaders";
+import type { PokemonDetail } from "@/lib/domain/types";
 import { useI18n } from "@/lib/i18n/provider";
 import { TypeBadge } from "./type-badge";
 import { TYPE_COLORS } from "./type-colors";

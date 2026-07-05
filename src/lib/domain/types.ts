@@ -64,3 +64,27 @@ export const STAT_SLUGS = [
 ] as const;
 
 export type StatSlug = (typeof STAT_SLUGS)[number];
+
+export interface EvolutionStageMember {
+  id: number;
+  slug: string;
+  name: string;
+  imageUrl: string;
+}
+
+export interface PokemonDetail {
+  id: number;
+  slug: string;
+  name: string;
+  generation: GenerationId;
+  types: TypeSlug[];
+  imageUrl: string;
+  stats: { stat: StatSlug; value: number }[];
+  heightMeters: number;
+  weightKilograms: number;
+  abilities: { slug: string; hidden: boolean }[];
+  genus: Record<Locale, string>;
+  flavorText: Record<Locale, string>;
+  evolutionStages: EvolutionStageMember[][];
+  maxId: number;
+}

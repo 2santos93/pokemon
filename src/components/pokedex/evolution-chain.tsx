@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import type { EvolutionStageMember, PokemonDetail } from "@/lib/pokeapi/loaders";
+import type { EvolutionStageMember, PokemonDetail } from "@/lib/domain/types";
 import { useI18n } from "@/lib/i18n/provider";
 
 function Member({

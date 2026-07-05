@@ -43,7 +43,7 @@ docker compose up --build   # sirve en http://localhost:3000
 ## Decisiones técnicas
 
 **Agregación en el servidor + caché, en lugar de llamadas directas desde el cliente.**
-Los datos siempre se originan en la PokéAPI en tiempo de ejecución (no hay ningún dataset commiteado en el repositorio). En el primer arranque en frío, el servidor construye un índice a partir de ~580 peticiones agrupadas en lotes, y lo cachea con `unstable_cache` (revalidación cada 24 h) además de la caché de `fetch` de Next. Esto mantiene la app rápida y es respetuoso con una API pública gratuita, sin renunciar a que el dato sea siempre de origen real.
+Los datos siempre se originan en la PokéAPI en tiempo de ejecución (no hay ningún dataset commiteado en el repositorio). En el primer arranque en frío, el servidor construye un índice a partir de ~580 peticiones agrupadas en lotes, y lo cachea con `unstable_cache` (revalidación cada 24 h) además de la caché de `fetch` de Next. Esto mantiene la app rápida y es respetuoso con una API pública gratuita, sin renunciar a que el dato sea siempre de origen real. En serverless (Vercel), la primera petición tras el deploy o tras la revalidación construye el índice (~10-15 s); las rutas declaran `maxDuration = 60` para cubrirlo.
 
 **La URL como única fuente de verdad del estado de la lista.**
 En vez de guardar filtros y búsqueda en estado de React, se codifican en la query string. Así la navegación hacia atrás, la recarga y los enlaces compartidos restauran la vista sin código adicional, y el estado es depurable a simple vista.
@@ -136,7 +136,7 @@ docker compose up --build   # served on http://localhost:3000
 ## Technical decisions
 
 **Server-side aggregation + caching instead of direct client calls.**
-Data always originates from the PokéAPI at runtime (no dataset is committed to the repo). On the first cold start the server builds an index from ~580 batched requests and caches it with `unstable_cache` (24h revalidation) on top of Next's `fetch` cache. This keeps the app fast and is polite to a free public API, without giving up that the data is always sourced live.
+Data always originates from the PokéAPI at runtime (no dataset is committed to the repo). On the first cold start the server builds an index from ~580 batched requests and caches it with `unstable_cache` (24h revalidation) on top of Next's `fetch` cache. This keeps the app fast and is polite to a free public API, without giving up that the data is always sourced live. On serverless (Vercel), the first request after a deploy or after revalidation builds the index (~10-15s); the routes declare `maxDuration = 60` to cover it.
 
 **The URL as the single source of truth for list state.**
 Rather than keeping filters and search in React state, they are encoded in the query string. Back-navigation, reload, and shared links restore the view with no extra code, and the state is inspectable at a glance.

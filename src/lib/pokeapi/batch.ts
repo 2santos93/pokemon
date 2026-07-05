@@ -7,7 +7,14 @@ export async function inBatches<T, R>(
   const results: R[] = [];
   for (let start = 0; start < items.length; start += size) {
     const batch = items.slice(start, start + size);
-    results.push(...(await Promise.all(batch.map(task))));
+    // Use allSettled instead of Promise.all: with all(), a rejection from one task
+    // leaves sibling rejections unhandled once the batch's promise already settled.
+    const settled = await Promise.allSettled(batch.map(task));
+    const rejected = settled.find(
+      (outcome): outcome is PromiseRejectedResult => outcome.status === "rejected",
+    );
+    if (rejected) throw rejected.reason;
+    results.push(...settled.map((outcome) => (outcome as PromiseFulfilledResult<R>).value));
   }
   return results;
 }

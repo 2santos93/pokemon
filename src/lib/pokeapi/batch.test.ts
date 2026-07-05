@@ -22,4 +22,14 @@ describe("inBatches", () => {
     );
     expect(peak).toBeLessThanOrEqual(4);
   });
+  it("rejects with the first task's error when multiple tasks in a batch reject", async () => {
+    const items = [0, 1, 2, 3];
+    await expect(
+      inBatches(items, 4, async (n) => {
+        if (n === 1) throw new Error("first failure");
+        if (n === 3) throw new Error("second failure");
+        return n;
+      }),
+    ).rejects.toThrow("first failure");
+  });
 });

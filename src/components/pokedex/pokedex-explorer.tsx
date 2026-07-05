@@ -24,6 +24,9 @@ export function PokedexExplorer({ index }: { index: PokemonSummary[] }) {
   // Start from the server-rendered page size to keep hydration deterministic, then
   // restore any persisted scroll depth after mount (see effect below).
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  // Guards the one-time post-mount restore below: without it, the persist branch
+  // would immediately overwrite sessionStorage with the initial PAGE_SIZE before
+  // the stored count had a chance to be read back in (hydration-safe restore).
   const restoredRef = useRef(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 

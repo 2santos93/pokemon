@@ -8,6 +8,10 @@ import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/locale";
 import { getPokemonDetail } from "@/lib/pokeapi/loaders";
 
+// The first uncached request after a deploy or revalidation builds the index
+// (~580 requests, 10-15s) inside this route's serving function.
+export const maxDuration = 60;
+
 interface DetailPageProps {
   params: Promise<{ id: string }>;
 }
