@@ -4,7 +4,7 @@ Explorador de las ~1025 especies Pokémon (Generaciones I–IX) construido sobre
 
 ![Captura de la Pokédex mostrando la cuadrícula de tarjetas con la barra de filtros](docs/screenshot.png)
 
-**Demo:** TODO-vercel-url
+**Demo:** https://pokemon-eight-blush.vercel.app
 
 > La versión en inglés está más abajo, en [English](#english).
 
@@ -99,7 +99,7 @@ Explorer for the ~1025 Pokémon species (Generations I–IX) built on top of the
 
 ![Screenshot of the Pokédex showing the card grid with the filter bar](docs/screenshot.png)
 
-**Demo:** TODO-vercel-url
+**Demo:** https://pokemon-eight-blush.vercel.app
 
 ## Running it
 
