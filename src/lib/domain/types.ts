@@ -35,3 +35,16 @@ export interface PokedexFilters {
   types: TypeSlug[];
   generations: GenerationId[];
 }
+
+export type Locale = "es" | "en";
+
+export const STAT_SLUGS = [
+  "hp",
+  "attack",
+  "defense",
+  "special-attack",
+  "special-defense",
+  "speed",
+] as const;
+
+export type StatSlug = (typeof STAT_SLUGS)[number];
