@@ -21,13 +21,22 @@ function readStoredCount(): number {
 export function PokedexExplorer({ index }: { index: PokemonSummary[] }) {
   const { d } = useI18n();
   const { filters, setQuery, toggleType, toggleGeneration, clearAll } = usePokedexFilters();
-  const [visibleCount, setVisibleCount] = useState(readStoredCount);
+  // Start from the server-rendered page size to keep hydration deterministic, then
+  // restore any persisted scroll depth after mount (see effect below).
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const restoredRef = useRef(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   const filtered = useMemo(() => filterPokemon(index, filters), [index, filters]);
   const visible = filtered.slice(0, visibleCount);
 
   useEffect(() => {
+    if (!restoredRef.current) {
+      restoredRef.current = true;
+      const stored = readStoredCount();
+      if (stored > PAGE_SIZE) setVisibleCount(stored);
+      return;
+    }
     window.sessionStorage.setItem(VISIBLE_COUNT_KEY, String(visibleCount));
   }, [visibleCount]);
 
