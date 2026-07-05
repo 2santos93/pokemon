@@ -23,7 +23,9 @@ export function LanguageToggle() {
           onClick={() => setLocale(option.locale)}
           aria-pressed={locale === option.locale}
           className={`px-3 py-1.5 transition-colors ${
-            locale === option.locale ? "bg-white text-[var(--pokedex-red)]" : "text-white/85 hover:bg-white/10"
+            locale === option.locale
+              ? "bg-white text-[var(--pokedex-red)]"
+              : "text-white/85 hover:bg-white/10"
           }`}
         >
           {option.label}

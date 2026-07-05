@@ -4,7 +4,11 @@ import { parseFilters, serializeFilters } from "./url-state";
 describe("parseFilters", () => {
   it("parses query, types and generations", () => {
     const params = new URLSearchParams("q=pika&types=fire,water&gens=1,3");
-    expect(parseFilters(params)).toEqual({ query: "pika", types: ["fire", "water"], generations: [1, 3] });
+    expect(parseFilters(params)).toEqual({
+      query: "pika",
+      types: ["fire", "water"],
+      generations: [1, 3],
+    });
   });
   it("returns empty filters for empty params", () => {
     expect(parseFilters(new URLSearchParams())).toEqual({ query: "", types: [], generations: [] });

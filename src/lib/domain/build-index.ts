@@ -34,9 +34,7 @@ export function buildPokemonIndex(source: IndexSource): PokemonSummary[] {
     .sort(([a], [b]) => a - b)
     .map(([id, { slug, generation }]) => {
       const chain = chainBySpeciesId.get(id) ?? { chainId: 0, slugs: [slug] };
-      const types = (typesById.get(id) ?? [])
-        .sort((a, b) => a.slot - b.slot)
-        .map((t) => t.type);
+      const types = (typesById.get(id) ?? []).sort((a, b) => a.slot - b.slot).map((t) => t.type);
       return {
         id,
         slug,

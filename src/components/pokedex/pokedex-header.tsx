@@ -25,13 +25,20 @@ export function PokedexHeader() {
               <span
                 key={light.color}
                 className="mt-[-14px] h-2.5 w-2.5 rounded-full border border-black/20"
-                style={{ background: light.color, animation: `blink 3s linear infinite ${light.delay}` }}
+                style={{
+                  background: light.color,
+                  animation: `blink 3s linear infinite ${light.delay}`,
+                }}
               />
             ))}
           </span>
           <span className="ml-1 flex flex-col leading-tight">
-            <span className="text-xl font-black tracking-wide text-white drop-shadow">{d.app.title}</span>
-            <span className="hidden text-[11px] font-medium text-white/80 sm:block">{d.app.tagline}</span>
+            <span className="text-xl font-black tracking-wide text-white drop-shadow">
+              {d.app.title}
+            </span>
+            <span className="hidden text-[11px] font-medium text-white/80 sm:block">
+              {d.app.tagline}
+            </span>
           </span>
         </Link>
         <div className="ml-auto">

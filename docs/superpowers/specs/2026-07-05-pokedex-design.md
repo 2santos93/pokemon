@@ -20,10 +20,12 @@ A premium, Pokédex-themed web app that lists all Pokémon (Gen I–IX, ~1025), 
 ### Data strategy: server-side aggregation with Next.js fetch cache (ISR)
 
 Rejected alternatives:
+
 - **Client-side only:** hundreds of browser requests to assemble generation/type/evolution data for 1025 Pokémon. Slow and fragile.
 - **Static JSON committed to the repo:** fast but contradicts the brief's "real-time information from PokéAPI".
 
 Chosen approach: React Server Components aggregate PokéAPI data using Next.js' native `fetch` cache with `revalidate` (24h). Index construction:
+
 - `GET /generation/{1..9}` — 9 requests → species → generation map.
 - `GET /type/{name}` — ~20 requests → pokémon → types map.
 - `GET /evolution-chain/{id}` — ~550 requests, parallel and cached → species → evolution chain map.
@@ -82,6 +84,7 @@ src/
 ```
 
 Boundaries:
+
 - `lib/pokeapi` knows HTTP and PokéAPI shapes; exports typed fetchers only.
 - `lib/domain` knows nothing about HTTP or React; pure functions + types. This is what the future "random Pokémon battle" feature will reuse.
 - `components` know nothing about fetching; receive typed props.

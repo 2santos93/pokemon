@@ -1,6 +1,22 @@
 export const TYPE_SLUGS = [
-  "normal", "fire", "water", "electric", "grass", "ice", "fighting", "poison", "ground",
-  "flying", "psychic", "bug", "rock", "ghost", "dragon", "dark", "steel", "fairy",
+  "normal",
+  "fire",
+  "water",
+  "electric",
+  "grass",
+  "ice",
+  "fighting",
+  "poison",
+  "ground",
+  "flying",
+  "psychic",
+  "bug",
+  "rock",
+  "ghost",
+  "dragon",
+  "dark",
+  "steel",
+  "fairy",
 ] as const;
 
 export type TypeSlug = (typeof TYPE_SLUGS)[number];

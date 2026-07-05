@@ -20,20 +20,38 @@ body {
 }
 
 @keyframes sensor-pulse {
-  0%, 100% { box-shadow: 0 0 12px 2px rgba(56, 189, 248, 0.7); }
-  50% { box-shadow: 0 0 22px 6px rgba(56, 189, 248, 0.35); }
+  0%,
+  100% {
+    box-shadow: 0 0 12px 2px rgba(56, 189, 248, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 22px 6px rgba(56, 189, 248, 0.35);
+  }
 }
 
 @keyframes blink {
-  0%, 92%, 100% { opacity: 1; }
-  96% { opacity: 0.35; }
+  0%,
+  92%,
+  100% {
+    opacity: 1;
+  }
+  96% {
+    opacity: 0.35;
+  }
 }
 
 @keyframes stat-fill {
-  from { width: 0%; }
+  from {
+    width: 0%;
+  }
 }
 
 @keyframes float-slow {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
 }

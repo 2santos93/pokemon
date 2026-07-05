@@ -27,15 +27,29 @@ function Member({
           {currentLabel}
         </span>
       )}
-      <Image src={member.imageUrl} alt={member.name} width={72} height={72} className="h-16 w-16 object-contain" />
+      <Image
+        src={member.imageUrl}
+        alt={member.name}
+        width={72}
+        height={72}
+        className="h-16 w-16 object-contain"
+      />
       <span className="text-center text-xs font-bold leading-tight">{member.name}</span>
-      <span className="font-mono text-[10px] text-[var(--muted)]">#{String(member.id).padStart(4, "0")}</span>
+      <span className="font-mono text-[10px] text-[var(--muted)]">
+        #{String(member.id).padStart(4, "0")}
+      </span>
     </div>
   );
   return isCurrent ? card : <Link href={`/pokemon/${member.id}`}>{card}</Link>;
 }
 
-export function EvolutionChain({ stages, currentId }: { stages: PokemonDetail["evolutionStages"]; currentId: number }) {
+export function EvolutionChain({
+  stages,
+  currentId,
+}: {
+  stages: PokemonDetail["evolutionStages"];
+  currentId: number;
+}) {
   const { d } = useI18n();
   if (stages.length <= 1 && (stages[0]?.length ?? 0) <= 1) {
     return <p className="text-sm text-[var(--muted)]">{d.detail.noEvolutions}</p>;

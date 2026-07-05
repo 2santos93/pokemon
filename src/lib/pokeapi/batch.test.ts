@@ -10,12 +10,16 @@ describe("inBatches", () => {
   it("never runs more than `size` tasks concurrently", async () => {
     let running = 0;
     let peak = 0;
-    await inBatches(Array.from({ length: 12 }, (_, i) => i), 4, async () => {
-      running += 1;
-      peak = Math.max(peak, running);
-      await new Promise((resolve) => setTimeout(resolve, 5));
-      running -= 1;
-    });
+    await inBatches(
+      Array.from({ length: 12 }, (_, i) => i),
+      4,
+      async () => {
+        running += 1;
+        peak = Math.max(peak, running);
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        running -= 1;
+      },
+    );
     expect(peak).toBeLessThanOrEqual(4);
   });
 });

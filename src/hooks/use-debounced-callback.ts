@@ -10,9 +10,12 @@ export function useDebouncedCallback<Args extends unknown[]>(
   callbackRef.current = callback;
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => () => {
-    if (timeoutRef.current !== null) clearTimeout(timeoutRef.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (timeoutRef.current !== null) clearTimeout(timeoutRef.current);
+    },
+    [],
+  );
 
   return useMemo(
     () =>

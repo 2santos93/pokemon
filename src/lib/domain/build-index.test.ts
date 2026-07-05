@@ -3,14 +3,43 @@ import { buildPokemonIndex, type IndexSource } from "./build-index";
 
 const source: IndexSource = {
   generations: [
-    { generation: 1, species: [{ id: 25, slug: "pikachu" }, { id: 26, slug: "raichu" }] },
-    { generation: 2, species: [{ id: 172, slug: "pichu" }, { id: 151, slug: "mew" }] },
+    {
+      generation: 1,
+      species: [
+        { id: 25, slug: "pikachu" },
+        { id: 26, slug: "raichu" },
+      ],
+    },
+    {
+      generation: 2,
+      species: [
+        { id: 172, slug: "pichu" },
+        { id: 151, slug: "mew" },
+      ],
+    },
   ],
   types: [
-    { type: "electric", pokemon: [{ id: 25, slot: 1 }, { id: 26, slot: 1 }, { id: 172, slot: 1 }, { id: 10101, slot: 1 }] },
+    {
+      type: "electric",
+      pokemon: [
+        { id: 25, slot: 1 },
+        { id: 26, slot: 1 },
+        { id: 172, slot: 1 },
+        { id: 10101, slot: 1 },
+      ],
+    },
     { type: "psychic", pokemon: [{ id: 151, slot: 1 }] },
   ],
-  chains: [{ chainId: 10, species: [{ id: 172, slug: "pichu" }, { id: 25, slug: "pikachu" }, { id: 26, slug: "raichu" }] }],
+  chains: [
+    {
+      chainId: 10,
+      species: [
+        { id: 172, slug: "pichu" },
+        { id: 25, slug: "pikachu" },
+        { id: 26, slug: "raichu" },
+      ],
+    },
+  ],
 };
 
 describe("buildPokemonIndex", () => {

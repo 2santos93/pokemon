@@ -5,7 +5,12 @@ import { es } from "./dictionaries/es";
 export interface Dictionary {
   app: { title: string; tagline: string };
   search: { placeholder: string; label: string; clear: string };
-  filters: { types: string; generations: string; clear: string; results: (count: number) => string };
+  filters: {
+    types: string;
+    generations: string;
+    clear: string;
+    results: (count: number) => string;
+  };
   list: { empty: string; emptyHint: string; loadError: string; retry: string };
   detail: {
     back: string;

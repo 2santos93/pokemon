@@ -35,12 +35,18 @@ export default async function PokemonDetailPage({ params }: DetailPageProps) {
         <BackLink />
         <div className="flex gap-2 text-sm font-semibold">
           {id > 1 && (
-            <Link href={`/pokemon/${id - 1}`} className="rounded-full bg-[var(--surface-raised)] px-4 py-1.5 hover:bg-white/10">
+            <Link
+              href={`/pokemon/${id - 1}`}
+              className="rounded-full bg-[var(--surface-raised)] px-4 py-1.5 hover:bg-white/10"
+            >
               ← {d.detail.previous}
             </Link>
           )}
           {id < detail.maxId && (
-            <Link href={`/pokemon/${id + 1}`} className="rounded-full bg-[var(--surface-raised)] px-4 py-1.5 hover:bg-white/10">
+            <Link
+              href={`/pokemon/${id + 1}`}
+              className="rounded-full bg-[var(--surface-raised)] px-4 py-1.5 hover:bg-white/10"
+            >
               {d.detail.next} →
             </Link>
           )}

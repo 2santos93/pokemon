@@ -18,7 +18,9 @@ export function PokemonCard({ pokemon }: { pokemon: PokemonSummary }) {
     >
       <div
         className="pointer-events-none absolute inset-0 opacity-25 transition-opacity duration-200 group-hover:opacity-45"
-        style={{ background: `radial-gradient(120px 120px at 50% 30%, ${accent}, transparent 70%)` }}
+        style={{
+          background: `radial-gradient(120px 120px at 50% 30%, ${accent}, transparent 70%)`,
+        }}
       />
       <span className="absolute right-3 top-2 font-mono text-xs font-semibold text-[var(--muted)]">
         #{String(pokemon.id).padStart(4, "0")}

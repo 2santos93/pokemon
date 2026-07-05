@@ -45,18 +45,27 @@ export function DetailHero({ detail }: { detail: PokemonDetail }) {
         </p>
         <dl className="mt-2 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
           <div className="rounded-xl bg-[var(--surface-raised)] p-3">
-            <dt className="text-[11px] font-bold uppercase text-[var(--muted)]">{d.detail.height}</dt>
+            <dt className="text-[11px] font-bold uppercase text-[var(--muted)]">
+              {d.detail.height}
+            </dt>
             <dd className="font-mono font-bold">{detail.heightMeters.toFixed(1)} m</dd>
           </div>
           <div className="rounded-xl bg-[var(--surface-raised)] p-3">
-            <dt className="text-[11px] font-bold uppercase text-[var(--muted)]">{d.detail.weight}</dt>
+            <dt className="text-[11px] font-bold uppercase text-[var(--muted)]">
+              {d.detail.weight}
+            </dt>
             <dd className="font-mono font-bold">{detail.weightKilograms.toFixed(1)} kg</dd>
           </div>
           <div className="col-span-2 rounded-xl bg-[var(--surface-raised)] p-3 sm:col-span-1">
-            <dt className="text-[11px] font-bold uppercase text-[var(--muted)]">{d.detail.abilities}</dt>
+            <dt className="text-[11px] font-bold uppercase text-[var(--muted)]">
+              {d.detail.abilities}
+            </dt>
             <dd className="text-xs font-semibold leading-relaxed">
               {detail.abilities
-                .map((a) => formatPokemonName(a.slug) + (a.hidden ? ` (${d.detail.hiddenAbility})` : ""))
+                .map(
+                  (a) =>
+                    formatPokemonName(a.slug) + (a.hidden ? ` (${d.detail.hiddenAbility})` : ""),
+                )
                 .join(", ")}
             </dd>
           </div>

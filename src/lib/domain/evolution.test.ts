@@ -1,11 +1,19 @@
 import { describe, expect, it } from "vitest";
 import { chainToStages, flattenChain, idFromUrl, type ChainNode } from "./evolution";
 
-const species = (id: number, name: string) => ({ name, url: `https://pokeapi.co/api/v2/pokemon-species/${id}/` });
+const species = (id: number, name: string) => ({
+  name,
+  url: `https://pokeapi.co/api/v2/pokemon-species/${id}/`,
+});
 
 const pikachuChain: ChainNode = {
   species: species(172, "pichu"),
-  evolves_to: [{ species: species(25, "pikachu"), evolves_to: [{ species: species(26, "raichu"), evolves_to: [] }] }],
+  evolves_to: [
+    {
+      species: species(25, "pikachu"),
+      evolves_to: [{ species: species(26, "raichu"), evolves_to: [] }],
+    },
+  ],
 };
 
 const eeveeChain: ChainNode = {
@@ -39,12 +47,15 @@ describe("flattenChain", () => {
 describe("chainToStages", () => {
   it("groups a linear chain into one stage per depth", () => {
     expect(chainToStages(pikachuChain).map((stage) => stage.map((s) => s.slug))).toEqual([
-      ["pichu"], ["pikachu"], ["raichu"],
+      ["pichu"],
+      ["pikachu"],
+      ["raichu"],
     ]);
   });
   it("groups branches into the same stage", () => {
     expect(chainToStages(eeveeChain).map((stage) => stage.map((s) => s.slug))).toEqual([
-      ["eevee"], ["vaporeon", "jolteon"],
+      ["eevee"],
+      ["vaporeon", "jolteon"],
     ]);
   });
 });

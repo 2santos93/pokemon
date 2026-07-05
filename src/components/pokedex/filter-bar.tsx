@@ -1,6 +1,12 @@
 "use client";
 
-import { GENERATION_IDS, TYPE_SLUGS, type GenerationId, type PokedexFilters, type TypeSlug } from "@/lib/domain/types";
+import {
+  GENERATION_IDS,
+  TYPE_SLUGS,
+  type GenerationId,
+  type PokedexFilters,
+  type TypeSlug,
+} from "@/lib/domain/types";
 import { useI18n } from "@/lib/i18n/provider";
 import { TYPE_COLORS } from "./type-colors";
 
@@ -12,7 +18,13 @@ interface FilterBarProps {
   onClear: () => void;
 }
 
-export function FilterBar({ filters, resultCount, onToggleType, onToggleGeneration, onClear }: FilterBarProps) {
+export function FilterBar({
+  filters,
+  resultCount,
+  onToggleType,
+  onToggleGeneration,
+  onClear,
+}: FilterBarProps) {
   const { d } = useI18n();
   const hasActiveFilters =
     filters.query !== "" || filters.types.length > 0 || filters.generations.length > 0;
@@ -69,7 +81,11 @@ export function FilterBar({ filters, resultCount, onToggleType, onToggleGenerati
       <div className="flex items-center gap-3 text-xs text-[var(--muted)]">
         <span className="font-semibold">{d.filters.results(resultCount)}</span>
         {hasActiveFilters && (
-          <button type="button" onClick={onClear} className="font-semibold text-sky-400 hover:text-sky-300">
+          <button
+            type="button"
+            onClick={onClear}
+            className="font-semibold text-sky-400 hover:text-sky-300"
+          >
             {d.filters.clear}
           </button>
         )}
