@@ -2,7 +2,7 @@ import type { Dictionary } from "../dictionary";
 
 export const es: Dictionary = {
   app: { title: "Pokédex", tagline: "Todas las generaciones · datos de PokéAPI" },
-  search: { placeholder: "Buscar por nombre o evolución…", label: "Buscar Pokémon" },
+  search: { placeholder: "Buscar por nombre o evolución…", label: "Buscar Pokémon", clear: "Borrar búsqueda" },
   filters: {
     types: "Tipo",
     generations: "Generación",
