@@ -4,13 +4,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { usePokedexFilters } from "@/hooks/use-pokedex-filters";
 import { filterPokemon } from "@/lib/domain/filter";
 import type { PokemonSummary } from "@/lib/domain/types";
+import { serializeFilters } from "@/lib/domain/url-state";
 import { useI18n } from "@/lib/i18n/provider";
 import { FilterBar } from "./filter-bar";
 import { PokemonCard } from "./pokemon-card";
 import { SearchBox } from "./search-box";
+import { LIST_URL_KEY, VISIBLE_COUNT_KEY } from "./session-keys";
 
 const PAGE_SIZE = 60;
-const VISIBLE_COUNT_KEY = "pokedex:visibleCount";
 
 function readStoredCount(): number {
   if (typeof window === "undefined") return PAGE_SIZE;
@@ -32,6 +33,13 @@ export function PokedexExplorer({ index }: { index: PokemonSummary[] }) {
 
   const filtered = useMemo(() => filterPokemon(index, filters), [index, filters]);
   const visible = filtered.slice(0, visibleCount);
+
+  // Remember the current list URL (including active filters) so the detail
+  // page's back button can return here even after detail-to-detail navigation.
+  useEffect(() => {
+    const query = serializeFilters(filters).toString();
+    window.sessionStorage.setItem(LIST_URL_KEY, query === "" ? "/" : `/?${query}`);
+  }, [filters]);
 
   useEffect(() => {
     if (!restoredRef.current) {
