@@ -4,3 +4,5 @@ node_modules
 .superpowers
 docs
 *.md
+.env*
+coverage
