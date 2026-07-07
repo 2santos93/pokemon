@@ -11,6 +11,25 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // The custom Socket.IO dev server uses webpack (not Turbopack). Its file
+  // watcher must ignore scratch/output dirs — e.g. Playwright MCP writes console
+  // logs into .playwright-mcp on every message, which would otherwise trigger an
+  // endless rebuild → log → rebuild feedback loop.
+  webpack: (config, { dev }) => {
+    if (dev) {
+      config.watchOptions = {
+        ...config.watchOptions,
+        ignored: [
+          "**/.git/**",
+          "**/node_modules/**",
+          "**/.playwright-mcp/**",
+          "**/.superpowers/**",
+          "**/docs/**",
+        ],
+      };
+    }
+    return config;
+  },
 };
 
 export default nextConfig;
