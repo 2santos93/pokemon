@@ -502,7 +502,13 @@ export function computeDamage(params: {
   const burn = attacker.status === "burn" && isPhysical ? 0.5 : 1;
   const randomFactor = (85 + rng.int(16)) / 100; // 0.85..1.00
 
-  const damage = Math.max(1, Math.floor(base * stab * eff * critMod * burn * randomFactor));
+  // STAB is floored on its own so type effectiveness scales an INTEGER base
+  // (per-stage rounding, as the main-series games do). Without this separate
+  // floor a neutral 61.5 truncates to 61 while its super-effective counterpart
+  // is 123 — not exactly double. Flooring after STAB keeps the x2 / x0.5
+  // effectiveness relationship exact.
+  const stabbed = Math.floor(base * stab);
+  const damage = Math.max(1, Math.floor(stabbed * eff * critMod * burn * randomFactor));
   return { damage, effectiveness: eff, crit };
 }
 ```

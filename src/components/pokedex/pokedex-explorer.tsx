@@ -82,9 +82,9 @@ export function PokedexExplorer({ index }: { index: PokemonSummary[] }) {
       ) : (
         <>
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-            {visible.map((pokemon) => (
+            {visible.map((pokemon, index) => (
               <li key={pokemon.id}>
-                <PokemonCard pokemon={pokemon} />
+                <PokemonCard pokemon={pokemon} priority={index < 6} />
               </li>
             ))}
           </ul>

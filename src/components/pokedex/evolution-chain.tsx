@@ -16,6 +16,7 @@ function Member({
 }) {
   const card = (
     <div
+      aria-current={isCurrent ? "page" : undefined}
       className={`relative flex w-28 flex-col items-center gap-1 rounded-2xl border p-3 transition-all ${
         isCurrent
           ? "border-[var(--pokedex-red)] bg-[var(--surface-raised)] shadow-[0_0_18px_rgba(220,10,45,0.35)]"

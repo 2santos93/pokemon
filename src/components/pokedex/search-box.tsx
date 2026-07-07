@@ -29,6 +29,20 @@ export function SearchBox({
     setValue(initialQuery);
   }, [initialQuery]);
 
+  // Pressing "/" anywhere on the page focuses the search box (unless the user
+  // is already typing in a form field).
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "/" || event.metaKey || event.ctrlKey || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return;
+      event.preventDefault();
+      inputRef.current?.focus();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   const update = (next: string) => {
     setValue(next);
     pushQuery(next);
@@ -39,7 +53,7 @@ export function SearchBox({
       <svg
         aria-hidden
         viewBox="0 0 24 24"
-        className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]"
+        className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--scan)]"
         fill="none"
         stroke="currentColor"
         strokeWidth="2"
@@ -54,9 +68,9 @@ export function SearchBox({
         onChange={(event) => update(event.target.value)}
         placeholder={d.search.placeholder}
         aria-label={d.search.label}
-        className="w-full rounded-full border border-white/10 bg-[var(--surface-raised)] py-2.5 pl-9 pr-9 text-sm outline-none transition-colors placeholder:text-[var(--muted)] focus:border-sky-400/60"
+        className="w-full rounded-xl border border-[var(--scan)]/20 bg-black/40 py-2.5 pl-10 pr-9 text-sm shadow-[inset_0_2px_6px_rgba(0,0,0,0.6)] outline-none transition-colors placeholder:text-[var(--muted)] focus:border-[var(--scan)]/60"
       />
-      {value !== "" && (
+      {value !== "" ? (
         <button
           type="button"
           onClick={() => update("")}
@@ -65,6 +79,13 @@ export function SearchBox({
         >
           ✕
         </button>
+      ) : (
+        <kbd
+          aria-hidden
+          className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 rounded border border-white/15 bg-[var(--surface)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--muted)] sm:block"
+        >
+          /
+        </kbd>
       )}
     </div>
   );

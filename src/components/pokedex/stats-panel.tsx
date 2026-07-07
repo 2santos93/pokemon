@@ -8,8 +8,8 @@ export function StatsPanel({ stats }: { stats: PokemonDetail["stats"] }) {
   const { d } = useI18n();
   const total = stats.reduce((sum, entry) => sum + entry.value, 0);
   return (
-    <section className="rounded-2xl border border-white/5 bg-[var(--surface)] p-5">
-      <h2 className="mb-4 text-sm font-black uppercase tracking-wider text-[var(--muted)]">
+    <section className="rounded-2xl border border-white/10 bg-black/25 p-5">
+      <h2 className="readout mb-4 text-[11px] font-black uppercase tracking-widest text-[var(--scan)]">
         {d.detail.stats}
       </h2>
       <div className="flex flex-col gap-2.5">
@@ -18,7 +18,7 @@ export function StatsPanel({ stats }: { stats: PokemonDetail["stats"] }) {
         ))}
       </div>
       <p className="mt-4 border-t border-white/10 pt-3 text-right text-sm font-bold">
-        {d.statsTotal}: <span className="font-mono">{total}</span>
+        {d.statsTotal}: <span className="readout text-[var(--scan-amber)]">{total}</span>
       </p>
     </section>
   );
