@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { MoveResponse } from "@/lib/pokeapi/types";
-import { mapAilment, toMove } from "./team-builder";
+import { createRng } from "./rng";
+import { mapAilment, toMove, pickTeamIds } from "./team-builder";
 
 function moveRes(partial: Partial<MoveResponse> = {}): MoveResponse {
   return {
@@ -47,5 +48,20 @@ describe("toMove", () => {
   });
   it("treats null accuracy as never-miss (0)", () => {
     expect(toMove(moveRes({ accuracy: null }))?.accuracy).toBe(0);
+  });
+});
+
+describe("pickTeamIds", () => {
+  it("returns the requested count of distinct ids within range", () => {
+    const ids = pickTeamIds(createRng(5), 3, 1025);
+    expect(ids).toHaveLength(3);
+    expect(new Set(ids).size).toBe(3);
+    for (const id of ids) {
+      expect(id).toBeGreaterThanOrEqual(1);
+      expect(id).toBeLessThanOrEqual(1025);
+    }
+  });
+  it("is deterministic for a seed", () => {
+    expect(pickTeamIds(createRng(9), 3, 1025)).toEqual(pickTeamIds(createRng(9), 3, 1025));
   });
 });

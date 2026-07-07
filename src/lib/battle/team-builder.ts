@@ -1,5 +1,6 @@
 import { isTypeSlug } from "@/lib/domain/types";
 import type { MoveResponse } from "@/lib/pokeapi/types";
+import type { RNG } from "./rng";
 import type { Move, MoveCategory, StatusCondition } from "./types";
 
 const AILMENTS: Record<string, Exclude<StatusCondition, "none">> = {
@@ -42,4 +43,12 @@ export function toMove(res: MoveResponse): Move | null {
 
   if (move.power <= 0) return null; // damaging move with no usable power
   return move;
+}
+
+export function pickTeamIds(rng: RNG, count: number, maxId: number): number[] {
+  const chosen = new Set<number>();
+  while (chosen.size < count && chosen.size < maxId) {
+    chosen.add(1 + rng.int(maxId));
+  }
+  return [...chosen];
 }
