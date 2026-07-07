@@ -1,6 +1,7 @@
 import type {
   EvolutionChainResponse,
   GenerationResponse,
+  MoveResponse,
   PokemonResponse,
   ResourceList,
   SpeciesResponse,
@@ -53,3 +54,6 @@ export const getPokemon = (id: number): Promise<PokemonResponse> => fetchJson(`/
 
 export const getSpecies = (id: number): Promise<SpeciesResponse> =>
   fetchJson(`/pokemon-species/${id}`);
+
+export const getMove = (idOrName: string | number): Promise<MoveResponse> =>
+  fetchJson(`/move/${idOrName}`);

@@ -39,7 +39,12 @@ export interface PokemonResponse {
   stats: { base_stat: number; stat: NamedApiResource }[];
   types: { slot: number; type: NamedApiResource }[];
   abilities: { ability: NamedApiResource; is_hidden: boolean }[];
-  sprites: { other?: { "official-artwork"?: { front_default: string | null } } };
+  sprites: {
+    front_default: string | null;
+    back_default: string | null;
+    other?: { "official-artwork"?: { front_default: string | null } };
+  };
+  moves: { move: NamedApiResource }[];
 }
 
 export interface SpeciesResponse {
@@ -50,4 +55,16 @@ export interface SpeciesResponse {
   flavor_text_entries: { flavor_text: string; language: NamedApiResource }[];
   generation: NamedApiResource;
   evolution_chain: { url: string };
+}
+
+export interface MoveResponse {
+  id: number;
+  name: string;
+  power: number | null;
+  accuracy: number | null;
+  pp: number | null;
+  priority: number;
+  type: NamedApiResource;
+  damage_class: NamedApiResource; // "physical" | "special" | "status"
+  meta: { ailment: NamedApiResource } | null; // ailment.name: "paralysis" | "burn" | "poison" | "sleep" | "none" | ...
 }
