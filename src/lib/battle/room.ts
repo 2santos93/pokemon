@@ -91,10 +91,16 @@ export function readyToStart(room: Room): boolean {
 }
 
 export function startBattle(room: Room): Room {
+  if (room.phase !== "teaming") return room;
   const p0 = room.players[0];
   const p1 = room.players[1];
   if (!p0?.team || p0.lead == null || !p1?.team || p1.lead == null) return room;
   const next = structuredClone(room);
+  // Clear any pendingAction submitted during lobby/teaming — the pure API
+  // allows applyAction to be called before a battle exists, and such stale
+  // actions must not survive into turn 1 of the fresh battle.
+  if (next.players[0]) next.players[0]!.pendingAction = null;
+  if (next.players[1]) next.players[1]!.pendingAction = null;
   next.battle = createBattle(
     { team: next.players[0]!.team!, lead: next.players[0]!.lead! },
     { team: next.players[1]!.team!, lead: next.players[1]!.lead! }
@@ -125,6 +131,17 @@ function finish(room: Room): Room {
   return room;
 }
 
+/**
+ * Resolve the current turn/sub-phase if all awaited sides have submitted an
+ * action.
+ *
+ * IMPORTANT — RNG lifetime: `rng` MUST be a single long-lived RNG instance
+ * created once per room and advanced across the entire battle (every call to
+ * `resolveIfReady` for that room should pass the *same* instance, threading
+ * its state forward). Do NOT construct a freshly-seeded RNG per turn — doing
+ * so would replay identical crit/miss/speed-tie rolls turn after turn and
+ * make battles non-random.
+ */
 export function resolveIfReady(
   room: Room,
   rng: RNG,
@@ -149,6 +166,11 @@ export function resolveIfReady(
       events.push(...result.events);
       next.players[slot]!.pendingAction = null;
     }
+    // The non-forced side isn't awaited here but may have submitted a stale
+    // action during the forced-switch window; clear both so nothing leaks
+    // into the next full turn.
+    next.players[0]!.pendingAction = null;
+    next.players[1]!.pendingAction = null;
   } else {
     const result = resolveTurn(
       battle,

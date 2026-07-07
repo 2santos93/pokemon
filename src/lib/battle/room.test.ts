@@ -185,6 +185,60 @@ describe("room turn sync", () => {
     expect(room.players[0]?.pendingAction).toBe(pendingBefore[0]);
     expect(room.players[1]?.pendingAction).toBe(pendingBefore[1]);
   });
+
+  it("startBattle clears any stale pre-battle pendingAction so it cannot auto-resolve turn 1", () => {
+    let room = teaming();
+    // A stale action submitted before the battle even exists (pure API allows this).
+    room = applyAction(room, 0, { kind: "move", moveIndex: 0 });
+    room = applyLead(applyLead(room, 0, 0), 1, 0);
+    room = startBattle(room);
+
+    expect(room.phase).toBe("battle");
+    expect(room.players[0]?.pendingAction).toBeNull();
+    expect(room.players[1]?.pendingAction).toBeNull();
+
+    // The stale action must not survive: resolveIfReady stays null until both
+    // sides submit fresh actions for turn 1.
+    expect(resolveIfReady(room, createRng(1))).toBeNull();
+
+    room = applyAction(room, 1, { kind: "move", moveIndex: 0 });
+    expect(resolveIfReady(room, createRng(1))).toBeNull();
+
+    room = applyAction(room, 0, { kind: "move", moveIndex: 0 });
+    expect(resolveIfReady(room, createRng(1))).not.toBeNull();
+  });
+
+  it("startBattle on a room already in battle phase returns it unchanged", () => {
+    const room = battling();
+    const battleBefore = room.battle;
+    const turnBefore = room.battle?.turn;
+    const again = startBattle(room);
+    expect(again).toBe(room);
+    expect(again.battle).toBe(battleBefore);
+    expect(again.battle?.turn).toBe(turnBefore);
+  });
+
+  it("forced switch clears the non-forced side's stale pendingAction too", () => {
+    let room = battling();
+    const b = room.battle!;
+    const active = b.sides[1].team[b.sides[1].activeIndex]!;
+    b.sides[1].team[b.sides[1].activeIndex] = { ...active, currentHp: 1 } as BattlePokemon;
+    room = applyAction(applyAction(room, 0, { kind: "move", moveIndex: 0 }), 1, { kind: "move", moveIndex: 0 });
+    const afterTurn = resolveIfReady(room, createRng(1))!;
+
+    expect(afterTurn.room.battle!.forcedSwitch[1]).toBe(true);
+    expect(awaitingSlots(afterTurn.room)).toEqual([1]);
+
+    // Side 0 is not awaited this sub-phase, but submits a stale action anyway.
+    let withStale = applyAction(afterTurn.room, 0, { kind: "move", moveIndex: 0 });
+    withStale = applyAction(withStale, 1, { kind: "switch", teamIndex: 1 });
+    const afterSwitch = resolveIfReady(withStale, createRng(1))!;
+
+    expect(afterSwitch.room.battle!.sides[1].activeIndex).toBe(1);
+    expect(afterSwitch.room.battle!.forcedSwitch[1]).toBe(false);
+    expect(afterSwitch.room.players[0]?.pendingAction).toBeNull();
+    expect(afterSwitch.room.players[1]?.pendingAction).toBeNull();
+  });
 });
 
 describe("room disconnect / rematch / view", () => {
