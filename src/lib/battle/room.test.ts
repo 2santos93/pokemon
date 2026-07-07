@@ -93,4 +93,10 @@ describe("room lead selection", () => {
     const room = applyLead(teaming(), 0, 9);
     expect(room.players[0]?.lead).toBeNull();
   });
+
+  it("applyLead does not mutate the input room", () => {
+    const room = teaming();
+    applyLead(room, 0, 1);
+    expect(room.players[0]?.lead).toBeNull();
+  });
 });
