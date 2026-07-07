@@ -363,7 +363,12 @@ export function startBattle(room: Room): Room {
   const p1 = room.players[1];
   if (!p0?.team || p0.lead == null || !p1?.team || p1.lead == null) return room;
   const next = structuredClone(room);
-  next.battle = createBattle({ team: p0.team, lead: p0.lead }, { team: p1.team, lead: p1.lead });
+  // Build the battle from the CLONED players' teams so battle state never aliases
+  // the input room's arrays (keeps the clone-before-mutate discipline intact).
+  next.battle = createBattle(
+    { team: next.players[0]!.team!, lead: next.players[0]!.lead! },
+    { team: next.players[1]!.team!, lead: next.players[1]!.lead! },
+  );
   next.phase = "battle";
   return next;
 }
