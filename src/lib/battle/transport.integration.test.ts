@@ -37,6 +37,8 @@ function start(): Promise<number> {
     if (slot === null) return;
     socket.join(`${roomId}:${slot}`);
     socket.emit("assigned", { slot });
+    const view = battle.viewFor(roomId, slot);
+    if (view) socket.emit("message", { type: "state", view });
     socket.on("message", (m) => void battle.message(roomId, slot, m));
     socket.on("disconnect", () => battle.disconnect(roomId, slot));
   });
@@ -66,10 +68,23 @@ describe("battle transport integration", () => {
     const port = await start();
     const a = connect(port);
     const b = connect(port);
-    await Promise.all([
+
+    // Register every listener before the connection handshake completes:
+    // the server emits "assigned" and the initial state "message" back to
+    // back in the same tick, so waiting for "assigned" first and only then
+    // attaching the "message" listener would race — the state event could
+    // already have fired (and be dropped) by the time we start listening.
+    const [, , initialA, initialB] = await Promise.all([
       waitFor(a, "assigned", () => true),
       waitFor(b, "assigned", () => true),
+      waitFor<ServerMessage>(a, "message", (m) => m.type === "state"),
+      waitFor<ServerMessage>(b, "message", (m) => m.type === "state"),
     ]);
+
+    // Each socket must receive its own initial state snapshot as soon as it
+    // joins its room — before any client has sent a setProfile message.
+    expect(initialA.type === "state" && initialA.view !== null).toBe(true);
+    expect(initialB.type === "state" && initialB.view !== null).toBe(true);
 
     a.emit("message", { type: "setProfile", nickname: "Ash", gender: "male" });
     b.emit("message", { type: "setProfile", nickname: "Misty", gender: "female" });

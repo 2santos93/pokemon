@@ -1,10 +1,10 @@
 import { legalActions } from "./engine";
 import { createRng as defaultCreateRng, type RNG } from "./rng";
-import type { ClientMessage, ServerMessage } from "./protocol";
+import type { ClientMessage, RoomView, ServerMessage } from "./protocol";
 import {
   applyAction, applyDisconnect, applyLead, applyProfile, awaitingSlots,
   createRoom, joinRoom, needsTeamRoll, readyToStart, resetForRematch,
-  resolveIfReady, startBattle, viewFor, withTeams, type Room,
+  resolveIfReady, startBattle, viewFor as roomViewFor, withTeams, type Room,
 } from "./room";
 import type { BattlePokemon, SideIndex, TurnAction } from "./types";
 
@@ -17,6 +17,7 @@ export interface ServerDeps {
 interface Entry {
   room: Room;
   rng: RNG;
+  rolling: boolean;
 }
 
 const SLOTS: SideIndex[] = [0, 1];
@@ -31,7 +32,7 @@ export class BattleServer {
     let entry = this.rooms.get(roomId);
     if (!entry) {
       const make = this.deps.createRng ?? defaultCreateRng;
-      entry = { room: createRoom(roomId), rng: make(this.seq++) };
+      entry = { room: createRoom(roomId), rng: make(this.seq++), rolling: false };
       this.rooms.set(roomId, entry);
     }
     const result = joinRoom(entry.room);
@@ -39,6 +40,13 @@ export class BattleServer {
     entry.room = result.room;
     this.broadcast(roomId);
     return result.slot;
+  }
+
+  /** A one-off snapshot of the room, from a single slot's point of view. */
+  viewFor(roomId: string, slot: SideIndex): RoomView | null {
+    const entry = this.rooms.get(roomId);
+    if (!entry || !entry.room.players[slot]) return null;
+    return roomViewFor(entry.room, slot);
   }
 
   async message(roomId: string, slot: SideIndex, msg: ClientMessage): Promise<void> {
@@ -92,10 +100,16 @@ export class BattleServer {
   private async rollTeams(roomId: string): Promise<void> {
     const entry = this.rooms.get(roomId);
     if (!entry) return;
-    const t0 = await this.deps.rollTeam(entry.rng);
-    const t1 = await this.deps.rollTeam(entry.rng);
-    entry.room = withTeams(entry.room, t0, t1);
-    this.broadcast(roomId);
+    if (entry.rolling) return;
+    entry.rolling = true;
+    try {
+      const t0 = await this.deps.rollTeam(entry.rng);
+      const t1 = await this.deps.rollTeam(entry.rng);
+      entry.room = withTeams(entry.room, t0, t1);
+      this.broadcast(roomId);
+    } finally {
+      entry.rolling = false;
+    }
   }
 
   private advance(roomId: string): void {
@@ -114,7 +128,7 @@ export class BattleServer {
     if (!entry) return;
     for (const slot of SLOTS) {
       if (entry.room.players[slot]?.connected) {
-        this.deps.send(roomId, slot, { type: "state", view: viewFor(entry.room, slot) });
+        this.deps.send(roomId, slot, { type: "state", view: roomViewFor(entry.room, slot) });
       }
     }
   }

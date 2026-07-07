@@ -36,6 +36,9 @@ app.prepare().then(() => {
     socket.data.slot = slot;
     socket.emit("assigned", { slot });
 
+    const view = battle.viewFor(roomId, slot);
+    if (view) socket.emit("message", { type: "state", view });
+
     socket.on("message", (msg: ClientMessage) => {
       void battle.message(roomId, slot, msg);
     });

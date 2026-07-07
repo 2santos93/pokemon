@@ -132,4 +132,41 @@ describe("BattleServer", () => {
     const last = sent.filter((s) => s.msg.type === "state").at(-1)!;
     expect(last.msg.type === "state" && last.msg.view.winnerSlot).toBe(0);
   });
+
+  it("guards against a concurrent duplicate team roll while one is in flight", async () => {
+    let calls = 0;
+    let resolveDeferred!: (value: BattlePokemon[]) => void;
+    const deferred = new Promise<BattlePokemon[]>((resolve) => {
+      resolveDeferred = resolve;
+    });
+    const sent: { slot: number; msg: ServerMessage }[] = [];
+    const deps: ServerDeps = {
+      rollTeam: async () => {
+        calls++;
+        return deferred;
+      },
+      send: (_room, slot, msg) => sent.push({ slot, msg }),
+    };
+    const server = new BattleServer(deps);
+    server.join("r"); server.join("r");
+
+    // First profile alone does not trigger a roll (not both-profiled yet).
+    await server.message("r", 0, { type: "setProfile", nickname: "Ash", gender: "male" });
+
+    // Second profile makes needsTeamRoll true and starts roll #1 — it awaits
+    // rollTeam's still-unresolved promise, so this call is now in flight.
+    const roll1 = server.message("r", 1, { type: "setProfile", nickname: "Misty", gender: "female" });
+
+    // While roll #1 is unresolved, phase is still "lobby" and both are
+    // profiled, so a re-sent setProfile would (bug) start a second
+    // concurrent roll on the same room RNG.
+    const roll2 = server.message("r", 0, { type: "setProfile", nickname: "Ash", gender: "male" });
+
+    resolveDeferred(team("T"));
+    await Promise.all([roll1, roll2]);
+
+    expect(calls).toBe(2);
+    const last = sent.filter((s) => s.msg.type === "state").at(-1)!;
+    expect(last.msg.type === "state" && last.msg.view.phase).toBe("teaming");
+  });
 });
