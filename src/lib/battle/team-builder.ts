@@ -1,6 +1,8 @@
 import { isTypeSlug, STAT_SLUGS, type StatSlug } from "@/lib/domain/types";
 import { formatPokemonName, officialArtworkUrl } from "@/lib/domain/format";
 import type { MoveResponse, PokemonResponse } from "@/lib/pokeapi/types";
+import { getMove, getPokemon } from "@/lib/pokeapi/client";
+import { inBatches } from "@/lib/pokeapi/batch";
 import type { RNG } from "./rng";
 import type { Move, MoveCategory, MoveSlot, StatusCondition, BattlePokemon } from "./types";
 import { computeStats } from "./stats";
@@ -132,4 +134,42 @@ export function buildBattlePokemon(
     frontSprite: pokemon.sprites.front_default ?? artwork,
     backSprite: pokemon.sprites.back_default ?? artwork,
   };
+}
+
+const MOVE_SAMPLE = 12;
+const MOVE_FETCH_BATCH = 6;
+
+export interface BattleFetchers {
+  getPokemon: (id: number) => Promise<PokemonResponse>;
+  getMove: (name: string) => Promise<MoveResponse>;
+}
+
+const defaultFetchers: BattleFetchers = { getPokemon, getMove };
+
+export function chooseMoveNames(pokemon: PokemonResponse, rng: RNG, sampleSize: number): string[] {
+  const names = pokemon.moves.map((m) => m.move.name);
+  return shuffle(names, rng).slice(0, sampleSize);
+}
+
+export async function loadBattlePokemon(
+  id: number,
+  rng: RNG,
+  deps: BattleFetchers = defaultFetchers,
+): Promise<BattlePokemon> {
+  const pokemon = await deps.getPokemon(id);
+  const names = chooseMoveNames(pokemon, rng, MOVE_SAMPLE);
+  const fetched = await inBatches(names, MOVE_FETCH_BATCH, (name) => deps.getMove(name));
+  const candidates = fetched
+    .map(toMove)
+    .filter((m): m is Move => m !== null);
+  return buildBattlePokemon(pokemon, candidates, rng);
+}
+
+export async function rollBattleTeam(
+  rng: RNG,
+  opts: { count?: number; maxId?: number; deps?: BattleFetchers } = {},
+): Promise<BattlePokemon[]> {
+  const { count = 3, maxId = 1025, deps = defaultFetchers } = opts;
+  const ids = pickTeamIds(rng, count, maxId);
+  return inBatches(ids, count, (id) => loadBattlePokemon(id, rng, deps));
 }

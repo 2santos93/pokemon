@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createRng } from "./rng";
-import type { BattlePokemon, BattleState, Move, TurnAction } from "./types";
+import type { BattlePokemon, BattleState, TurnAction } from "./types";
 import { orderActions } from "./order";
 
 function mon(speed: number, partial: Partial<BattlePokemon> = {}): BattlePokemon {

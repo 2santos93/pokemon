@@ -150,3 +150,37 @@ describe("buildBattlePokemon", () => {
     expect(built.backSprite).toContain("6.png");
   });
 });
+
+import { chooseMoveNames, loadBattlePokemon } from "./team-builder";
+
+describe("chooseMoveNames", () => {
+  it("returns up to sampleSize distinct names", () => {
+    const p = charizardResponse();
+    p.moves = [
+      { move: { name: "ember", url: "" } },
+      { move: { name: "fly", url: "" } },
+      { move: { name: "slash", url: "" } },
+    ];
+    const names = chooseMoveNames(p, createRng(2), 2);
+    expect(names).toHaveLength(2);
+    expect(new Set(names).size).toBe(2);
+  });
+});
+
+describe("loadBattlePokemon", () => {
+  it("fetches species + moves through injected deps and builds a battler", async () => {
+    const p = charizardResponse();
+    p.moves = [{ move: { name: "flamethrower", url: "" } }];
+    const deps = {
+      getPokemon: async () => p,
+      getMove: async (): Promise<MoveResponse> => ({
+        id: 53, name: "flamethrower", power: 90, accuracy: 100, pp: 15, priority: 0,
+        type: { name: "fire", url: "" }, damage_class: { name: "special", url: "" },
+        meta: { ailment: { name: "none", url: "" } },
+      }),
+    };
+    const mon = await loadBattlePokemon(6, createRng(1), deps);
+    expect(mon.name).toBe("Charizard");
+    expect(mon.moves.some((s) => s.move.name === "flamethrower")).toBe(true);
+  });
+});
