@@ -64,6 +64,7 @@ export function TeamSelect({
                 alt={pokemon.name}
                 width={96}
                 height={96}
+                unoptimized
                 className="relative z-10 h-24 w-24 object-contain drop-shadow-[0_8px_12px_rgba(0,0,0,0.5)] transition-transform duration-200 group-hover:scale-110"
                 style={{ imageRendering: "pixelated" }}
               />

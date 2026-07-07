@@ -3,11 +3,15 @@
 import { useState } from "react";
 import { useBattleSocket } from "@/hooks/use-battle-socket";
 import { useI18n } from "@/lib/i18n/provider";
+import { ActionMenu } from "./action-menu";
+import { BattleLog } from "./battle-log";
+import { BattleScene } from "./battle-scene";
 import { LobbyForm } from "./lobby-form";
+import { ResultScreen } from "./result-screen";
 import { TeamSelect } from "./team-select";
 
 export function BattleRoom({ roomId }: { roomId: string }) {
-  const { view, error, send } = useBattleSocket(roomId);
+  const { view, events, error, send } = useBattleSocket(roomId);
   const { d } = useI18n();
   const [copied, setCopied] = useState(false);
 
@@ -77,15 +81,17 @@ export function BattleRoom({ roomId }: { roomId: string }) {
 
   if (view.phase === "battle") {
     return (
-      <Shell>
-        <p className="readout text-center text-sm font-bold text-[var(--scan)]">BATTLE…</p>
+      <Shell wide>
+        <BattleScene view={view} />
+        <BattleLog view={view} events={events} />
+        <ActionMenu view={view} send={send} />
       </Shell>
     );
   }
 
   return (
     <Shell>
-      <p className="readout text-center text-sm font-bold text-[var(--scan)]">FINISHED</p>
+      <ResultScreen view={view} send={send} />
     </Shell>
   );
 }
