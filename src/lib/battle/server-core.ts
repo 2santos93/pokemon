@@ -92,10 +92,8 @@ export class BattleServer {
   private async rollTeams(roomId: string): Promise<void> {
     const entry = this.rooms.get(roomId);
     if (!entry) return;
-    const [t0, t1] = await Promise.all([
-      this.deps.rollTeam(entry.rng),
-      this.deps.rollTeam(entry.rng),
-    ]);
+    const t0 = await this.deps.rollTeam(entry.rng);
+    const t1 = await this.deps.rollTeam(entry.rng);
     entry.room = withTeams(entry.room, t0, t1);
     this.broadcast(roomId);
   }
@@ -115,7 +113,7 @@ export class BattleServer {
     const entry = this.rooms.get(roomId);
     if (!entry) return;
     for (const slot of SLOTS) {
-      if (entry.room.players[slot]) {
+      if (entry.room.players[slot]?.connected) {
         this.deps.send(roomId, slot, { type: "state", view: viewFor(entry.room, slot) });
       }
     }
