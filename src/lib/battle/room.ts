@@ -1,6 +1,7 @@
 import type { Gender } from "./protocol";
 import type { BattlePokemon, BattleState, SideIndex, TurnAction } from "./types";
 import type { RoomPhase } from "./protocol";
+import { createBattle } from "./engine";
 
 export interface RoomPlayer {
   slot: SideIndex;
@@ -68,5 +69,32 @@ export function withTeams(room: Room, team0: BattlePokemon[], team1: BattlePokem
   if (next.players[0]) next.players[0].team = team0;
   if (next.players[1]) next.players[1].team = team1;
   next.phase = "teaming";
+  return next;
+}
+
+export function applyLead(room: Room, slot: SideIndex, teamIndex: number): Room {
+  const player = room.players[slot];
+  if (!player?.team) return room;
+  if (teamIndex < 0 || teamIndex >= player.team.length) return room;
+  const next = structuredClone(room);
+  next.players[slot]!.lead = teamIndex;
+  return next;
+}
+
+export function readyToStart(room: Room): boolean {
+  return (
+    room.phase === "teaming" &&
+    room.players[0]?.lead != null &&
+    room.players[1]?.lead != null
+  );
+}
+
+export function startBattle(room: Room): Room {
+  const p0 = room.players[0];
+  const p1 = room.players[1];
+  if (!p0?.team || p0.lead == null || !p1?.team || p1.lead == null) return room;
+  const next = structuredClone(room);
+  next.battle = createBattle({ team: p0.team, lead: p0.lead }, { team: p1.team, lead: p1.lead });
+  next.phase = "battle";
   return next;
 }

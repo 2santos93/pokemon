@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import type { BattlePokemon } from "./types";
 import {
+  applyLead,
   applyProfile,
   bothProfiled,
   createRoom,
   joinRoom,
   needsTeamRoll,
+  readyToStart,
+  startBattle,
   withTeams,
 } from "./room";
 
@@ -65,5 +68,29 @@ describe("room lobby", () => {
     const room = joined();
     applyProfile(room, 0, "Ash", "male");
     expect(room.players[0]?.nickname).toBeNull();
+  });
+});
+
+function teaming(): ReturnType<typeof createRoom> {
+  let room = applyProfile(applyProfile(joined(), 0, "Ash", "male"), 1, "Misty", "female");
+  return withTeams(room, fakeTeam("A"), fakeTeam("B"));
+}
+
+describe("room lead selection", () => {
+  it("starts a battle once both leads are chosen", () => {
+    let room = teaming();
+    room = applyLead(room, 0, 1);
+    expect(readyToStart(room)).toBe(false);
+    room = applyLead(room, 1, 2);
+    expect(readyToStart(room)).toBe(true);
+    room = startBattle(room);
+    expect(room.phase).toBe("battle");
+    expect(room.battle?.sides[0].activeIndex).toBe(1);
+    expect(room.battle?.sides[1].activeIndex).toBe(2);
+  });
+
+  it("ignores an out-of-range lead", () => {
+    const room = applyLead(teaming(), 0, 9);
+    expect(room.players[0]?.lead).toBeNull();
   });
 });
