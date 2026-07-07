@@ -91,7 +91,6 @@ export function selectMoves(candidates: Move[], rng: RNG): MoveSlot[] {
     if (picked.length < 4) picked.push(damaging);
     else picked[picked.length - 1] = damaging;
   }
-  if (picked.length === 0) picked.push(STRUGGLE);
 
   return picked.map((move) => ({ move, pp: move.pp }));
 }

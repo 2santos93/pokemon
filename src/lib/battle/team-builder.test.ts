@@ -96,4 +96,11 @@ describe("selectMoves", () => {
     expect(slots).toHaveLength(1);
     expect(slots[0]!.move.id).toBe(STRUGGLE.id);
   });
+  it("swaps in a real damaging move when none is in the first four", () => {
+    const candidates = [status(1, "a"), status(2, "b"), status(3, "c"), status(4, "d"), status(5, "e"), dmg(9, "real")];
+    const slots = selectMoves(candidates, createRng(1));
+    const damaging = slots.filter((s) => s.move.category !== "status" && s.move.power > 0);
+    expect(damaging.length).toBeGreaterThanOrEqual(1);
+    expect(damaging.some((s) => s.move.id !== STRUGGLE.id)).toBe(true);
+  });
 });
