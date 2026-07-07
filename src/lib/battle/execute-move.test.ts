@@ -69,4 +69,33 @@ describe("executeMove", () => {
     expect(s.sides[1].team[0]!.currentHp).toBe(150);
     expect(events.some((e) => e.type === "miss")).toBe(true);
   });
+
+  it("keeps an asleep pokemon from acting for its full sleepTurns count, then wakes and acts", () => {
+    const attacker = mon({ moves: [slot(tackle)], status: "sleep", sleepTurns: 1 });
+    const s = state(attacker, mon());
+
+    // Turn 1: rolled 1 sleep turn — must be fully prevented this turn, no damage.
+    const turn1 = executeMove(s, 0, 0, hit);
+    expect(turn1).toEqual([{ type: "statusPrevent", side: 0, pokemon: "M", status: "sleep" }]);
+    expect(s.sides[0].team[0]!.status).toBe("sleep");
+    expect(s.sides[0].team[0]!.sleepTurns).toBe(0);
+    expect(s.sides[1].team[0]!.currentHp).toBe(150);
+
+    // Turn 2: wakes up and acts.
+    const turn2 = executeMove(s, 0, 0, hit);
+    expect(s.sides[0].team[0]!.status).toBe("none");
+    expect(turn2.some((e) => e.type === "wake")).toBe(true);
+    expect(turn2.some((e) => e.type === "damage")).toBe(true);
+    expect(s.sides[1].team[0]!.currentHp).toBeLessThan(150);
+  });
+
+  it("prevents a paralyzed attacker from acting when the paralysis roll triggers", () => {
+    const attacker = mon({ moves: [slot(tackle)], status: "paralysis" });
+    const s = state(attacker, mon());
+    const alwaysParalyzed: RNG = { next: () => 0.5, int: () => 0, chance: () => true, pick: (i) => i[0]! };
+    const events = executeMove(s, 0, 0, alwaysParalyzed);
+    expect(events).toEqual([{ type: "statusPrevent", side: 0, pokemon: "M", status: "paralysis" }]);
+    expect(s.sides[1].team[0]!.currentHp).toBe(150);
+    expect(s.sides[0].team[0]!.moves[0]!.pp).toBe(tackle.pp); // no PP spent, no action taken
+  });
 });

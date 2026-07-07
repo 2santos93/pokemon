@@ -25,16 +25,16 @@ export function executeMove(
   const slot = attacker.moves[moveIndex]!;
   if (!slot) return events;
 
-  // Sleep: count down, maybe wake.
+  // Sleep: a Pokémon asleep for N turns is prevented from moving for N turns,
+  // then wakes and acts on turn N+1.
   if (attacker.status === "sleep") {
-    if (attacker.sleepTurns > 0) attacker.sleepTurns -= 1;
-    if (attacker.sleepTurns <= 0) {
-      attacker.status = "none";
-      events.push({ type: "wake", side, pokemon: attacker.name });
-    } else {
+    if (attacker.sleepTurns > 0) {
+      attacker.sleepTurns -= 1;
       events.push({ type: "statusPrevent", side, pokemon: attacker.name, status: "sleep" });
       return events;
     }
+    attacker.status = "none";
+    events.push({ type: "wake", side, pokemon: attacker.name });
   }
 
   // Paralysis: 25% full-turn stop.

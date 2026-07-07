@@ -26,13 +26,28 @@ export function createBattle(
   };
 }
 
+/**
+ * Mutates `state`. No-ops (returns `[]`, mutates nothing) if `teamIndex` is out of
+ * range, targets the currently active slot, or targets a fainted Pokémon — this
+ * guards against illegal switches that would otherwise crash or leave a fainted
+ * Pokémon active.
+ */
 function applySwitch(state: BattleState, side: SideIndex, teamIndex: number): BattleEvent[] {
   const s = state.sides[side]!;
+  const target = s.team[teamIndex];
+  if (teamIndex < 0 || teamIndex >= s.team.length || teamIndex === s.activeIndex || !target || target.currentHp <= 0) {
+    return [];
+  }
   const from = s.team[s.activeIndex]!.name;
   s.activeIndex = teamIndex;
-  return [{ type: "switch", side, from, to: s.team[teamIndex]!.name }];
+  return [{ type: "switch", side, from, to: target.name }];
 }
 
+/**
+ * Callers (the room layer) should still validate actions against `legalActions()`
+ * before calling this; the switch guards here are defense-in-depth against
+ * illegal/untrusted input, not a substitute for that validation.
+ */
 export function resolveTurn(
   state: BattleState,
   actions: [TurnAction, TurnAction],
@@ -59,14 +74,27 @@ export function resolveTurn(
   return { state: next, events };
 }
 
+/**
+ * Callers (the room layer) should still validate `teamIndex` against
+ * `legalActions()` before calling this; the fallback below is defense-in-depth
+ * against illegal/untrusted input, not a substitute for that validation.
+ */
 export function chooseReplacement(
   state: BattleState,
   side: SideIndex,
   teamIndex: number,
 ): TurnResult {
   const next: BattleState = structuredClone(state);
-  const events = applySwitch(next, side, teamIndex);
-  next.forcedSwitch[side] = false;
+  const s = next.sides[side]!;
+  const isLegal = (i: number) => i >= 0 && i < s.team.length && i !== s.activeIndex && s.team[i]!.currentHp > 0;
+
+  const resolvedIndex = isLegal(teamIndex) ? teamIndex : s.team.findIndex((_, i) => isLegal(i));
+  if (resolvedIndex === -1) {
+    return { state: next, events: [] };
+  }
+
+  const events = applySwitch(next, side, resolvedIndex);
+  if (events.length > 0) next.forcedSwitch[side] = false;
   return { state: next, events };
 }
 
