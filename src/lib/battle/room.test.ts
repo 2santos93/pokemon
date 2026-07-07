@@ -141,11 +141,45 @@ describe("room turn sync", () => {
     const pokemon = b.sides[1].team[0];
     b.sides[1].team = [{ ...pokemon, currentHp: 1 } as BattlePokemon];
     room = applyAction(applyAction(room, 0, { kind: "move", moveIndex: 0 }), 1, { kind: "move", moveIndex: 0 });
-    let result = resolveIfReady(room, createRng(2));
-    // Keep resolving forced switches / turns until finished (single-mon side faints → win).
-    while (result && result.room.phase !== "finished" && awaitingSlots(result.room).length === 0) {
-      result = resolveIfReady(result.room, createRng(2));
-    }
-    expect(result!.room.phase === "finished" || result!.room.battle!.winner !== null).toBe(true);
+    const result = resolveIfReady(room, createRng(2));
+    expect(result!.room.phase).toBe("finished");
+    expect(result!.room.winnerSlot).toBe(0);
+  });
+
+  it("forces a switch when the active Pokémon faints but the bench is alive", () => {
+    let room = battling();
+    const b = room.battle!;
+    const active = b.sides[1].team[b.sides[1].activeIndex]!;
+    b.sides[1].team[b.sides[1].activeIndex] = { ...active, currentHp: 1 } as BattlePokemon;
+    room = applyAction(applyAction(room, 0, { kind: "move", moveIndex: 0 }), 1, { kind: "move", moveIndex: 0 });
+    const afterTurn = resolveIfReady(room, createRng(1))!;
+
+    expect(afterTurn.room.battle!.forcedSwitch[1]).toBe(true);
+    expect(afterTurn.room.battle!.winner).toBeNull();
+    expect(awaitingSlots(afterTurn.room)).toEqual([1]);
+
+    const withSwitch = applyAction(afterTurn.room, 1, { kind: "switch", teamIndex: 1 });
+    const afterSwitch = resolveIfReady(withSwitch, createRng(1))!;
+
+    expect(afterSwitch.room.battle!.sides[1].activeIndex).toBe(1);
+    expect(afterSwitch.room.battle!.forcedSwitch[1]).toBe(false);
+    expect(afterSwitch.room.players[1]?.pendingAction).toBeNull();
+  });
+
+  it("applyAction does not mutate the input room", () => {
+    const room = battling();
+    applyAction(room, 0, { kind: "move", moveIndex: 0 });
+    expect(room.players[0]?.pendingAction).toBeNull();
+  });
+
+  it("resolveIfReady does not mutate the input room", () => {
+    let room = battling();
+    room = applyAction(applyAction(room, 0, { kind: "move", moveIndex: 0 }), 1, { kind: "move", moveIndex: 0 });
+    const battleBefore = room.battle;
+    const pendingBefore = [room.players[0]?.pendingAction, room.players[1]?.pendingAction];
+    resolveIfReady(room, createRng(1));
+    expect(room.battle).toBe(battleBefore);
+    expect(room.players[0]?.pendingAction).toBe(pendingBefore[0]);
+    expect(room.players[1]?.pendingAction).toBe(pendingBefore[1]);
   });
 });
