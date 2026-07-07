@@ -1,7 +1,8 @@
 import type { Gender } from "./protocol";
-import type { BattlePokemon, BattleState, SideIndex, TurnAction } from "./types";
+import type { BattlePokemon, BattleState, SideIndex, TurnAction, BattleEvent } from "./types";
 import type { RoomPhase } from "./protocol";
-import { createBattle } from "./engine";
+import { createBattle, chooseReplacement, resolveTurn } from "./engine";
+import type { RNG } from "./rng";
 
 export interface RoomPlayer {
   slot: SideIndex;
@@ -100,4 +101,65 @@ export function startBattle(room: Room): Room {
   );
   next.phase = "battle";
   return next;
+}
+
+export function awaitingSlots(room: Room): SideIndex[] {
+  if (room.phase !== "battle" || !room.battle || room.battle.winner !== null) return [];
+  const forced: SideIndex[] = [];
+  if (room.battle.forcedSwitch[0]) forced.push(0);
+  if (room.battle.forcedSwitch[1]) forced.push(1);
+  return forced.length > 0 ? forced : [0, 1];
+}
+
+export function applyAction(room: Room, slot: SideIndex, action: TurnAction): Room {
+  const next = structuredClone(room);
+  if (next.players[slot]) next.players[slot]!.pendingAction = action;
+  return next;
+}
+
+function finish(room: Room): Room {
+  if (room.battle?.winner != null) {
+    room.phase = "finished";
+    room.winnerSlot = room.battle.winner;
+  }
+  return room;
+}
+
+export function resolveIfReady(
+  room: Room,
+  rng: RNG,
+): { room: Room; events: BattleEvent[] } | null {
+  const awaiting = awaitingSlots(room);
+  if (awaiting.length === 0) return null;
+  const actions = awaiting.map((slot) => room.players[slot]?.pendingAction ?? null);
+  if (actions.some((a) => a === null)) return null;
+
+  const next = structuredClone(room);
+  const battle = next.battle!;
+  const events: BattleEvent[] = [];
+
+  const forced = battle.forcedSwitch[0] || battle.forcedSwitch[1];
+  if (forced) {
+    // Forced-switch sub-phase: each flagged slot submitted a switch.
+    for (const slot of awaiting) {
+      const action = next.players[slot]!.pendingAction!;
+      const teamIndex = action.kind === "switch" ? action.teamIndex : next.battle!.sides[slot].activeIndex;
+      const result = chooseReplacement(next.battle!, slot, teamIndex);
+      next.battle = result.state;
+      events.push(...result.events);
+      next.players[slot]!.pendingAction = null;
+    }
+  } else {
+    const result = resolveTurn(
+      battle,
+      [next.players[0]!.pendingAction!, next.players[1]!.pendingAction!],
+      rng,
+    );
+    next.battle = result.state;
+    events.push(...result.events);
+    next.players[0]!.pendingAction = null;
+    next.players[1]!.pendingAction = null;
+  }
+
+  return { room: finish(next), events };
 }

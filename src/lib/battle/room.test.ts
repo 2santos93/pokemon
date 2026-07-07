@@ -1,16 +1,20 @@
 import { describe, expect, it } from "vitest";
-import type { BattlePokemon } from "./types";
+import type { BattlePokemon, Move, MoveSlot } from "./types";
 import {
+  applyAction,
   applyLead,
   applyProfile,
+  awaitingSlots,
   bothProfiled,
   createRoom,
   joinRoom,
   needsTeamRoll,
   readyToStart,
+  resolveIfReady,
   startBattle,
   withTeams,
 } from "./room";
+import { createRng } from "./rng";
 
 function fakeTeam(prefix: string): BattlePokemon[] {
   return [0, 1, 2].map((i) => ({
@@ -98,5 +102,50 @@ describe("room lead selection", () => {
     const room = teaming();
     applyLead(room, 0, 1);
     expect(room.players[0]?.lead).toBeNull();
+  });
+});
+
+const tackle: Move = { id: 1, name: "tackle", type: "normal", category: "physical", power: 40, accuracy: 100, pp: 35, priority: 0 };
+function withMove(team: ReturnType<typeof fakeTeam>): ReturnType<typeof fakeTeam> {
+  return team.map((m) => ({ ...m, moves: [{ move: tackle, pp: 35 } satisfies MoveSlot] }));
+}
+
+function battling(): ReturnType<typeof createRoom> {
+  let room = applyProfile(applyProfile(joined(), 0, "Ash", "male"), 1, "Misty", "female");
+  room = withTeams(room, withMove(fakeTeam("A")), withMove(fakeTeam("B")));
+  room = applyLead(applyLead(room, 0, 0), 1, 0);
+  return startBattle(room);
+}
+
+describe("room turn sync", () => {
+  it("awaits both slots at the start of a battle", () => {
+    expect(awaitingSlots(battling())).toEqual([0, 1]);
+  });
+
+  it("resolves nothing until both actions are in", () => {
+    let room = battling();
+    room = applyAction(room, 0, { kind: "move", moveIndex: 0 });
+    expect(resolveIfReady(room, createRng(1))).toBeNull();
+    room = applyAction(room, 1, { kind: "move", moveIndex: 0 });
+    const result = resolveIfReady(room, createRng(1));
+    expect(result).not.toBeNull();
+    expect(result!.events.length).toBeGreaterThan(0);
+    expect(result!.room.players[0]?.pendingAction).toBeNull();
+    expect(result!.room.players[1]?.pendingAction).toBeNull();
+  });
+
+  it("finishes the room when the battle produces a winner", () => {
+    // Reduce one side to a single 1-HP Pokémon so one turn ends it.
+    let room = battling();
+    const b = room.battle!;
+    const pokemon = b.sides[1].team[0];
+    b.sides[1].team = [{ ...pokemon, currentHp: 1 } as BattlePokemon];
+    room = applyAction(applyAction(room, 0, { kind: "move", moveIndex: 0 }), 1, { kind: "move", moveIndex: 0 });
+    let result = resolveIfReady(room, createRng(2));
+    // Keep resolving forced switches / turns until finished (single-mon side faints → win).
+    while (result && result.room.phase !== "finished" && awaitingSlots(result.room).length === 0) {
+      result = resolveIfReady(result.room, createRng(2));
+    }
+    expect(result!.room.phase === "finished" || result!.room.battle!.winner !== null).toBe(true);
   });
 });
