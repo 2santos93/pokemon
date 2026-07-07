@@ -64,7 +64,7 @@ export function PokedexHeader() {
             aria-label={d.battle.title}
             className="readout flex items-center gap-1.5 rounded-full border border-white/15 bg-black/20 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white/90 transition-colors hover:border-white/40 hover:bg-white/10"
           >
-            <span aria-hidden>⚔</span>
+            <span aria-hidden>⚔️</span>
             <span className="hidden sm:inline">{d.battle.title}</span>
           </Link>
           <LanguageToggle />

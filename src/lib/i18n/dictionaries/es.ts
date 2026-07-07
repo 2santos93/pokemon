@@ -78,7 +78,7 @@ export const es: Dictionary = {
   battle: {
     title: "Combate",
     create: "Crear combate",
-    landingHint: "Reta a un amigo a un duelo Pokémon 1 contra 1 en vivo.",
+    landingHint: "Reta a un amigo a un combate Pokémon 3 contra 3 en vivo.",
     shareHint: "Envía este enlace a tu retador.",
     copy: "Copiar enlace",
     copied: "¡Copiado!",

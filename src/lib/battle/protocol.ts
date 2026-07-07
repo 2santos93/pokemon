@@ -26,6 +26,8 @@ export interface PlayerView {
   nickname: string | null;
   gender: Gender | null;
   connected: boolean;
+  /** Index (0..2) of the team member chosen as lead, once picked. */
+  lead: number | null;
 }
 
 /** A per-player snapshot the client renders. Friendly duel → both players see the full battle. */

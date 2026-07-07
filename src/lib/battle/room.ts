@@ -221,6 +221,7 @@ function playerView(player: RoomPlayer | null): PlayerView | null {
     nickname: player.nickname,
     gender: player.gender,
     connected: player.connected,
+    lead: player.lead,
   };
 }
 
