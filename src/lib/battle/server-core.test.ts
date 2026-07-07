@@ -1,0 +1,71 @@
+import { describe, expect, it } from "vitest";
+import { BattleServer, type ServerDeps } from "./server-core";
+import type { BattlePokemon } from "./types";
+import type { ServerMessage } from "./protocol";
+
+function team(prefix: string): BattlePokemon[] {
+  const move = { move: { id: 1, name: "tackle", type: "normal" as const, category: "physical" as const, power: 40, accuracy: 100, pp: 35, priority: 0 }, pp: 35 };
+  return [0, 1, 2].map((i) => ({
+    id: i, name: `${prefix}${i}`, types: ["normal"], level: 50,
+    stats: { hp: 150, attack: 100, defense: 100, "special-attack": 100, "special-defense": 100, speed: 100 },
+    maxHp: 150, currentHp: 150, moves: [move], status: "none", sleepTurns: 0, frontSprite: "", backSprite: "",
+  }));
+}
+
+function harness() {
+  const sent: { slot: number; msg: ServerMessage }[] = [];
+  const deps: ServerDeps = {
+    rollTeam: async () => team("T"),
+    send: (_room, slot, msg) => sent.push({ slot, msg }),
+  };
+  return { server: new BattleServer(deps), sent };
+}
+
+describe("BattleServer", () => {
+  it("assigns slots 0 then 1 and rejects a third", () => {
+    const { server } = harness();
+    expect(server.join("r")).toBe(0);
+    expect(server.join("r")).toBe(1);
+    expect(server.join("r")).toBeNull();
+  });
+
+  it("rolls teams once both profiles are set", async () => {
+    const { server, sent } = harness();
+    server.join("r"); server.join("r");
+    await server.message("r", 0, { type: "setProfile", nickname: "Ash", gender: "male" });
+    await server.message("r", 1, { type: "setProfile", nickname: "Misty", gender: "female" });
+    const last = sent.filter((s) => s.msg.type === "state").at(-1)!;
+    expect(last.msg.type === "state" && last.msg.view.phase).toBe("teaming");
+  });
+
+  it("starts the battle once both leads are chosen and resolves a turn", async () => {
+    const { server, sent } = harness();
+    server.join("r"); server.join("r");
+    await server.message("r", 0, { type: "setProfile", nickname: "Ash", gender: "male" });
+    await server.message("r", 1, { type: "setProfile", nickname: "Misty", gender: "female" });
+    await server.message("r", 0, { type: "chooseLead", teamIndex: 0 });
+    await server.message("r", 1, { type: "chooseLead", teamIndex: 0 });
+    await server.message("r", 0, { type: "action", action: { kind: "move", moveIndex: 0 } });
+    await server.message("r", 1, { type: "action", action: { kind: "move", moveIndex: 0 } });
+    expect(sent.some((s) => s.msg.type === "events")).toBe(true);
+  });
+
+  it("ignores an action from a slot that is not being awaited", async () => {
+    const { server, sent } = harness();
+    server.join("r"); server.join("r");
+    const before = sent.length;
+    await server.message("r", 0, { type: "action", action: { kind: "move", moveIndex: 0 } });
+    // No battle yet → awaitingSlots is [], action ignored, no new events emitted.
+    expect(sent.some((s, i) => i >= before && s.msg.type === "events")).toBe(false);
+  });
+
+  it("forfeits to the opponent on disconnect mid-game", async () => {
+    const { server, sent } = harness();
+    server.join("r"); server.join("r");
+    await server.message("r", 0, { type: "setProfile", nickname: "Ash", gender: "male" });
+    await server.message("r", 1, { type: "setProfile", nickname: "Misty", gender: "female" });
+    server.disconnect("r", 1);
+    const last = sent.filter((s) => s.msg.type === "state").at(-1)!;
+    expect(last.msg.type === "state" && last.msg.view.winnerSlot).toBe(0);
+  });
+});
