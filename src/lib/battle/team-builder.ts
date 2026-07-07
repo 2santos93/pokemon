@@ -1,7 +1,9 @@
-import { isTypeSlug } from "@/lib/domain/types";
-import type { MoveResponse } from "@/lib/pokeapi/types";
+import { isTypeSlug, STAT_SLUGS, type StatSlug } from "@/lib/domain/types";
+import { formatPokemonName, officialArtworkUrl } from "@/lib/domain/format";
+import type { MoveResponse, PokemonResponse } from "@/lib/pokeapi/types";
 import type { RNG } from "./rng";
-import type { Move, MoveCategory, MoveSlot, StatusCondition } from "./types";
+import type { Move, MoveCategory, MoveSlot, StatusCondition, BattlePokemon } from "./types";
+import { computeStats } from "./stats";
 
 const AILMENTS: Record<string, Exclude<StatusCondition, "none">> = {
   paralysis: "paralysis",
@@ -93,4 +95,41 @@ export function selectMoves(candidates: Move[], rng: RNG): MoveSlot[] {
   }
 
   return picked.map((move) => ({ move, pp: move.pp }));
+}
+
+const LEVEL = 50;
+
+export function buildBattlePokemon(
+  pokemon: PokemonResponse,
+  candidateMoves: Move[],
+  rng: RNG,
+): BattlePokemon {
+  const base = {} as Record<StatSlug, number>;
+  for (const slug of STAT_SLUGS) base[slug] = 0;
+  for (const entry of pokemon.stats) {
+    if ((STAT_SLUGS as readonly string[]).includes(entry.stat.name)) {
+      base[entry.stat.name as StatSlug] = entry.base_stat;
+    }
+  }
+  const stats = computeStats(base, LEVEL);
+  const artwork = officialArtworkUrl(pokemon.id);
+
+  return {
+    id: pokemon.id,
+    name: formatPokemonName(pokemon.name),
+    types: pokemon.types
+      .slice()
+      .sort((a, b) => a.slot - b.slot)
+      .map((t) => t.type.name)
+      .filter(isTypeSlug),
+    level: LEVEL,
+    stats,
+    maxHp: stats.hp,
+    currentHp: stats.hp,
+    moves: selectMoves(candidateMoves, rng),
+    status: "none",
+    sleepTurns: 0,
+    frontSprite: pokemon.sprites.front_default ?? artwork,
+    backSprite: pokemon.sprites.back_default ?? artwork,
+  };
 }

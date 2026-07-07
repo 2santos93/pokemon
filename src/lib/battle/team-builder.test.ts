@@ -66,8 +66,9 @@ describe("pickTeamIds", () => {
   });
 });
 
-import { selectMoves, STRUGGLE } from "./team-builder";
+import { selectMoves, STRUGGLE, buildBattlePokemon } from "./team-builder";
 import type { Move } from "./types";
+import type { PokemonResponse } from "@/lib/pokeapi/types";
 
 function dmg(id: number, name: string): Move {
   return { id, name, type: "normal", category: "physical", power: 40, accuracy: 100, pp: 20, priority: 0 };
@@ -102,5 +103,50 @@ describe("selectMoves", () => {
     const damaging = slots.filter((s) => s.move.category !== "status" && s.move.power > 0);
     expect(damaging.length).toBeGreaterThanOrEqual(1);
     expect(damaging.some((s) => s.move.id !== STRUGGLE.id)).toBe(true);
+  });
+});
+
+function charizardResponse(): PokemonResponse {
+  return {
+    id: 6, name: "charizard", height: 17, weight: 905,
+    stats: [
+      { base_stat: 78, stat: { name: "hp", url: "" } },
+      { base_stat: 84, stat: { name: "attack", url: "" } },
+      { base_stat: 78, stat: { name: "defense", url: "" } },
+      { base_stat: 109, stat: { name: "special-attack", url: "" } },
+      { base_stat: 85, stat: { name: "special-defense", url: "" } },
+      { base_stat: 100, stat: { name: "speed", url: "" } },
+    ],
+    types: [
+      { slot: 1, type: { name: "fire", url: "" } },
+      { slot: 2, type: { name: "flying", url: "" } },
+    ],
+    abilities: [],
+    sprites: { front_default: "front.png", back_default: "back.png" },
+    moves: [],
+  };
+}
+
+describe("buildBattlePokemon", () => {
+  it("builds a level-50 battler with computed stats and full HP", () => {
+    const mon = buildBattlePokemon(charizardResponse(), [dmg(1, "ember")], createRng(1));
+    expect(mon.level).toBe(50);
+    expect(mon.name).toBe("Charizard");
+    expect(mon.types).toEqual(["fire", "flying"]);
+    expect(mon.maxHp).toBe(153);
+    expect(mon.currentHp).toBe(153);
+    expect(mon.stats.speed).toBe(120);
+    expect(mon.moves.length).toBeGreaterThanOrEqual(1);
+    expect(mon.status).toBe("none");
+  });
+  it("uses pixel sprites and falls back to artwork when null", () => {
+    const withSprites = buildBattlePokemon(charizardResponse(), [dmg(1, "ember")], createRng(1));
+    expect(withSprites.frontSprite).toBe("front.png");
+    expect(withSprites.backSprite).toBe("back.png");
+    const noSprites = charizardResponse();
+    noSprites.sprites = { front_default: null, back_default: null };
+    const built = buildBattlePokemon(noSprites, [dmg(1, "ember")], createRng(1));
+    expect(built.frontSprite).toContain("6.png");
+    expect(built.backSprite).toContain("6.png");
   });
 });
