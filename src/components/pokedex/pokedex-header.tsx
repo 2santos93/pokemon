@@ -58,7 +58,15 @@ export function PokedexHeader() {
           className="grille mx-auto hidden h-8 w-28 rounded-md opacity-60 md:block"
         />
 
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
+          <Link
+            href="/battle"
+            aria-label={d.battle.title}
+            className="readout flex items-center gap-1.5 rounded-full border border-white/15 bg-black/20 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white/90 transition-colors hover:border-white/40 hover:bg-white/10"
+          >
+            <span aria-hidden>⚔</span>
+            <span className="hidden sm:inline">{d.battle.title}</span>
+          </Link>
           <LanguageToggle />
         </div>
       </div>

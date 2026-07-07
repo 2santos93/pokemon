@@ -36,6 +36,7 @@ export interface Dictionary {
   battle: {
     title: string;
     create: string;
+    landingHint: string;
     shareHint: string;
     copy: string;
     copied: string;
