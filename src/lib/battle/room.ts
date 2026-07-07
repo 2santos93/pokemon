@@ -1,4 +1,4 @@
-import type { Gender } from "./protocol";
+import type { Gender, PlayerView, RoomView } from "./protocol";
 import type { BattlePokemon, BattleState, SideIndex, TurnAction, BattleEvent } from "./types";
 import type { RoomPhase } from "./protocol";
 import { createBattle, chooseReplacement, resolveTurn } from "./engine";
@@ -162,4 +162,55 @@ export function resolveIfReady(
   }
 
   return { room: finish(next), events };
+}
+
+export function applyDisconnect(room: Room, slot: SideIndex): Room {
+  const next = structuredClone(room);
+  if (next.players[slot]) next.players[slot]!.connected = false;
+  const other: SideIndex = slot === 0 ? 1 : 0;
+  const battleInProgress = next.phase === "lobby" || next.phase === "teaming" || next.phase === "battle";
+  if (battleInProgress && next.players[other]) {
+    next.phase = "finished";
+    next.winnerSlot = other;
+  }
+  return next;
+}
+
+export function resetForRematch(room: Room): Room {
+  const next = structuredClone(room);
+  for (const player of next.players) {
+    if (player) {
+      player.team = null;
+      player.lead = null;
+      player.pendingAction = null;
+      player.connected = true;
+    }
+  }
+  next.battle = null;
+  next.winnerSlot = null;
+  next.phase = "lobby";
+  return next;
+}
+
+function playerView(player: RoomPlayer | null): PlayerView | null {
+  if (!player) return null;
+  return {
+    slot: player.slot,
+    nickname: player.nickname,
+    gender: player.gender,
+    connected: player.connected,
+  };
+}
+
+export function viewFor(room: Room, slot: SideIndex): RoomView {
+  return {
+    roomId: room.id,
+    phase: room.phase,
+    you: slot,
+    players: [playerView(room.players[0]), playerView(room.players[1])],
+    yourTeam: room.players[slot]?.team ?? null,
+    battle: room.battle,
+    awaiting: awaitingSlots(room),
+    winnerSlot: room.winnerSlot,
+  };
 }

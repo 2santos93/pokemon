@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { BattlePokemon, Move, MoveSlot } from "./types";
 import {
   applyAction,
+  applyDisconnect,
   applyLead,
   applyProfile,
   awaitingSlots,
@@ -11,7 +12,9 @@ import {
   needsTeamRoll,
   readyToStart,
   resolveIfReady,
+  resetForRematch,
   startBattle,
+  viewFor,
   withTeams,
 } from "./room";
 import { createRng } from "./rng";
@@ -76,7 +79,7 @@ describe("room lobby", () => {
 });
 
 function teaming(): ReturnType<typeof createRoom> {
-  let room = applyProfile(applyProfile(joined(), 0, "Ash", "male"), 1, "Misty", "female");
+  const room = applyProfile(applyProfile(joined(), 0, "Ash", "male"), 1, "Misty", "female");
   return withTeams(room, fakeTeam("A"), fakeTeam("B"));
 }
 
@@ -181,5 +184,33 @@ describe("room turn sync", () => {
     expect(room.battle).toBe(battleBefore);
     expect(room.players[0]?.pendingAction).toBe(pendingBefore[0]);
     expect(room.players[1]?.pendingAction).toBe(pendingBefore[1]);
+  });
+});
+
+describe("room disconnect / rematch / view", () => {
+  it("awards a forfeit win when a player disconnects mid-battle", () => {
+    const room = applyDisconnect(battling(), 1);
+    expect(room.phase).toBe("finished");
+    expect(room.winnerSlot).toBe(0);
+  });
+
+  it("resetForRematch returns to lobby keeping profiles and re-arming the roll", () => {
+    let room = battling();
+    room = resetForRematch(room);
+    expect(room.phase).toBe("lobby");
+    expect(room.players[0]?.nickname).toBe("Ash");
+    expect(room.players[0]?.team).toBeNull();
+    expect(room.battle).toBeNull();
+    expect(needsTeamRoll(room)).toBe(true);
+  });
+
+  it("viewFor exposes only the caller's team and the shared battle", () => {
+    const room = battling();
+    const view = viewFor(room, 0);
+    expect(view.you).toBe(0);
+    expect(view.yourTeam).toHaveLength(3);
+    expect(view.players[1]?.nickname).toBe("Misty");
+    expect(view.awaiting).toEqual([0, 1]);
+    expect(view.battle).not.toBeNull();
   });
 });
