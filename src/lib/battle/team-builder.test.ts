@@ -65,3 +65,35 @@ describe("pickTeamIds", () => {
     expect(pickTeamIds(createRng(9), 3, 1025)).toEqual(pickTeamIds(createRng(9), 3, 1025));
   });
 });
+
+import { selectMoves, STRUGGLE } from "./team-builder";
+import type { Move } from "./types";
+
+function dmg(id: number, name: string): Move {
+  return { id, name, type: "normal", category: "physical", power: 40, accuracy: 100, pp: 20, priority: 0 };
+}
+function status(id: number, name: string): Move {
+  return { id, name, type: "electric", category: "status", power: 0, accuracy: 100, pp: 20, priority: 0, inflicts: "paralysis" };
+}
+
+describe("selectMoves", () => {
+  it("returns at most 4 slots with starting pp", () => {
+    const slots = selectMoves([dmg(1, "a"), dmg(2, "b"), dmg(3, "c"), dmg(4, "d"), dmg(5, "e")], createRng(1));
+    expect(slots).toHaveLength(4);
+    expect(slots.every((s) => s.pp === s.move.pp)).toBe(true);
+    expect(new Set(slots.map((s) => s.move.id)).size).toBe(4);
+  });
+  it("always includes at least one damaging move", () => {
+    const slots = selectMoves([status(1, "a"), status(2, "b"), status(3, "c"), status(4, "d")], createRng(1));
+    expect(slots.some((s) => s.move.category !== "status" && s.move.power > 0)).toBe(true);
+  });
+  it("uses STRUGGLE as the damaging fallback when there are no damaging candidates", () => {
+    const slots = selectMoves([status(1, "a")], createRng(1));
+    expect(slots.some((s) => s.move.id === STRUGGLE.id)).toBe(true);
+  });
+  it("returns at least one slot even with no candidates", () => {
+    const slots = selectMoves([], createRng(1));
+    expect(slots).toHaveLength(1);
+    expect(slots[0]!.move.id).toBe(STRUGGLE.id);
+  });
+});

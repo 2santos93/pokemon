@@ -1,7 +1,7 @@
 import { isTypeSlug } from "@/lib/domain/types";
 import type { MoveResponse } from "@/lib/pokeapi/types";
 import type { RNG } from "./rng";
-import type { Move, MoveCategory, StatusCondition } from "./types";
+import type { Move, MoveCategory, MoveSlot, StatusCondition } from "./types";
 
 const AILMENTS: Record<string, Exclude<StatusCondition, "none">> = {
   paralysis: "paralysis",
@@ -51,4 +51,47 @@ export function pickTeamIds(rng: RNG, count: number, maxId: number): number[] {
     chosen.add(1 + rng.int(maxId));
   }
   return [...chosen];
+}
+
+export const STRUGGLE: Move = {
+  id: 165,
+  name: "struggle",
+  type: "normal",
+  category: "physical",
+  power: 50,
+  accuracy: 0, // never misses
+  pp: 1,
+  priority: 0,
+};
+
+function isDamaging(move: Move): boolean {
+  return move.category !== "status" && move.power > 0;
+}
+
+function shuffle<T>(items: T[], rng: RNG): T[] {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = rng.int(i + 1);
+    const temp = copy[i]!;
+    copy[i] = copy[j]!;
+    copy[j] = temp;
+  }
+  return copy;
+}
+
+export function selectMoves(candidates: Move[], rng: RNG): MoveSlot[] {
+  // Dedupe by id, then shuffle for variety.
+  const unique = [...new Map(candidates.map((m) => [m.id, m])).values()];
+  const shuffled = shuffle(unique, rng);
+
+  const picked: Move[] = shuffled.slice(0, 4);
+  if (!picked.some(isDamaging)) {
+    // Guarantee a damaging option: swap in a damaging candidate, else STRUGGLE.
+    const damaging = shuffled.find(isDamaging) ?? STRUGGLE;
+    if (picked.length < 4) picked.push(damaging);
+    else picked[picked.length - 1] = damaging;
+  }
+  if (picked.length === 0) picked.push(STRUGGLE);
+
+  return picked.map((move) => ({ move, pp: move.pp }));
 }
