@@ -91,8 +91,4 @@ Más allá de lo pedido, el proyecto incluye un **modo de combate por turnos ent
 ## Uso de IA
 
 Se emplearon herramientas de asistencia por IA como apoyo durante el desarrollo. Todas las decisiones de arquitectura, el diseño y el código fueron revisados y validados manualmente; comprendo y puedo defender cada parte de la solución.
-
-### Limitaciones conocidas
-
-- Una ruta `/pokemon/<id>` inexistente muestra la interfaz de «no encontrado» localizada, pero responde con **HTTP 200** en lugar de 404 (el layout raíz lee la cookie de idioma, lo que hace la ruta dinámica bajo el *streaming* de Next 15).
 </content>

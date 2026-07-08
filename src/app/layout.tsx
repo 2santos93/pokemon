@@ -16,7 +16,7 @@ const pixel = Press_Start_2P({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://pokemon-eight-blush.vercel.app"),
+  metadataBase: new URL("https://pokedex-battle.onrender.com"),
   title: "Pokédex — Gen I–IX",
   description: "Pokédex con todas las generaciones · Full-generation Pokédex powered by PokéAPI",
   openGraph: {
