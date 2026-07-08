@@ -12,13 +12,12 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm build
 
-FROM node:24-alpine AS runner
-WORKDIR /app
-ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 HOSTNAME=0.0.0.0 PORT=3000
-RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
-COPY --from=build --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=build --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=build --chown=nextjs:nodejs /app/public ./public
-USER nextjs
+FROM base AS runner
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/.next ./.next
+COPY --from=build /app/public ./public
+COPY --from=build /app/src ./src
+COPY --from=build /app/package.json /app/tsconfig.json /app/next.config.ts /app/server.ts ./
 EXPOSE 3000
-CMD ["node", "server.js"]
+CMD ["pnpm", "start"]
