@@ -1,10 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import type { ClientMessage, RoomView } from "@/lib/battle/protocol";
 import { useI18n } from "@/lib/i18n/provider";
 import { TypeBadge } from "@/components/pokedex/type-badge";
 import { TYPE_COLORS } from "@/components/pokedex/type-colors";
+import { BattleSprite } from "./battle-sprite";
 
 export function TeamSelect({
   view,
@@ -59,14 +59,10 @@ export function TeamSelect({
                 style={{ background: `radial-gradient(130px 130px at 50% 32%, ${accent}, transparent 70%)` }}
               />
 
-              <Image
+              <BattleSprite
                 src={pokemon.frontSprite}
                 alt={pokemon.name}
-                width={96}
-                height={96}
-                unoptimized
                 className="relative z-10 h-24 w-24 object-contain drop-shadow-[0_8px_12px_rgba(0,0,0,0.5)] transition-transform duration-200 group-hover:scale-110"
-                style={{ imageRendering: "pixelated" }}
               />
 
               <h2 className="relative z-10 mt-1 text-sm font-bold capitalize">{pokemon.name}</h2>

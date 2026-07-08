@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import type { RoomView } from "@/lib/battle/protocol";
 import type { BattlePokemon, SideIndex } from "@/lib/battle/types";
 import { useI18n } from "@/lib/i18n/provider";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import { HpBar } from "./hp-bar";
+import { BattleSprite } from "./battle-sprite";
 
 export function BattleScene({ view }: { view: RoomView }) {
   const { d } = useI18n();
@@ -34,26 +34,18 @@ export function BattleScene({ view }: { view: RoomView }) {
       </div>
 
       <div className="flex items-start justify-end">
-        <Image
+        <BattleSprite
           src={foeActive.frontSprite}
           alt={foeActive.name}
-          width={112}
-          height={112}
-          unoptimized
           className="h-24 w-24 object-contain drop-shadow-[0_10px_14px_rgba(0,0,0,0.35)] sm:h-28 sm:w-28"
-          style={{ imageRendering: "pixelated" }}
         />
       </div>
 
       <div className="flex items-end justify-start">
-        <Image
+        <BattleSprite
           src={myActive.backSprite}
           alt={myActive.name}
-          width={128}
-          height={128}
-          unoptimized
           className="h-28 w-28 object-contain drop-shadow-[0_10px_14px_rgba(0,0,0,0.35)] sm:h-32 sm:w-32"
-          style={{ imageRendering: "pixelated" }}
         />
       </div>
 

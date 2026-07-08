@@ -1,0 +1,52 @@
+"use client";
+
+import Image from "next/image";
+import { useState, useEffect } from "react";
+
+export function BattleSprite({
+  src,
+  alt,
+  className,
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  // Reset failed state when src changes so a new Pokémon's sprite retries
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
+
+  if (!src || failed) {
+    // Local, network-free fallback so a rate-limited/missing sprite never shows
+    // a broken-image icon.
+    return (
+      <svg
+        role="img"
+        aria-label={alt}
+        viewBox="0 0 100 100"
+        className={className}
+        style={{ imageRendering: "pixelated" }}
+      >
+        <circle cx="50" cy="50" r="46" fill="#1a2342" stroke="rgba(255,255,255,0.25)" strokeWidth="4" />
+        <path d="M4 50h30a16 16 0 0 1 32 0h30" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="4" />
+        <circle cx="50" cy="50" r="12" fill="#0b1020" stroke="rgba(255,255,255,0.35)" strokeWidth="4" />
+      </svg>
+    );
+  }
+
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      width={128}
+      height={128}
+      unoptimized
+      onError={() => setFailed(true)}
+      className={className}
+      style={{ imageRendering: "pixelated" }}
+    />
+  );
+}
