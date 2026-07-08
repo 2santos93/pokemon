@@ -303,16 +303,14 @@ describe("BattleServer", () => {
     const server = new BattleServer(deps);
     server.join("r"); server.join("r");
 
-    // First profile alone does not trigger a roll (not both-profiled yet).
+    // first profile alone doesn't trigger a roll (not both-profiled yet)
     await server.message("r", 0, { type: "setProfile", nickname: "Ash", gender: "male" });
 
-    // Second profile makes needsTeamRoll true and starts roll #1 — it awaits
-    // rollTeam's still-unresolved promise, so this call is now in flight.
+    // second profile starts roll #1, in flight on the unresolved rollTeam promise
     const roll1 = server.message("r", 1, { type: "setProfile", nickname: "Misty", gender: "female" });
 
-    // While roll #1 is unresolved, phase is still "lobby" and both are
-    // profiled, so a re-sent setProfile would (bug) start a second
-    // concurrent roll on the same room RNG.
+    // still "lobby" and both profiled while roll #1 is pending — a re-sent
+    // setProfile would (bug) start a second concurrent roll on the same room RNG
     const roll2 = server.message("r", 0, { type: "setProfile", nickname: "Ash", gender: "male" });
 
     resolveDeferred(team("T"));

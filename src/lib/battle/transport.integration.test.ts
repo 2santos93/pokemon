@@ -1,4 +1,3 @@
-// src/lib/battle/transport.integration.test.ts
 import { createServer, type Server as HttpServer } from "node:http";
 import { afterEach, describe, expect, it } from "vitest";
 import { Server as SocketServer } from "socket.io";
@@ -70,11 +69,8 @@ describe("battle transport integration", () => {
     const a = connect(port, "tokA");
     const b = connect(port, "tokB");
 
-    // Register every listener before the connection handshake completes:
-    // the server emits "assigned" and the initial state "message" back to
-    // back in the same tick, so waiting for "assigned" first and only then
-    // attaching the "message" listener would race — the state event could
-    // already have fired (and be dropped) by the time we start listening.
+    // register listeners before the handshake completes — "assigned" and the initial
+    // "message" fire back-to-back in the same tick, so attaching sequentially would race
     const [, , initialA, initialB] = await Promise.all([
       waitFor(a, "assigned", () => true),
       waitFor(b, "assigned", () => true),
@@ -82,8 +78,7 @@ describe("battle transport integration", () => {
       waitFor<ServerMessage>(b, "message", (m) => m.type === "state"),
     ]);
 
-    // Each socket must receive its own initial state snapshot as soon as it
-    // joins its room — before any client has sent a setProfile message.
+    // each socket gets its own initial snapshot on join, before any setProfile
     expect(initialA.type === "state" && initialA.view !== null).toBe(true);
     expect(initialB.type === "state" && initialB.view !== null).toBe(true);
 

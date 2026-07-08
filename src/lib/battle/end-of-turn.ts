@@ -1,8 +1,5 @@
+import { hasHealthyBench } from "./bench";
 import type { BattleEvent, BattleState, SideIndex } from "./types";
-
-function hasHealthyBench(state: BattleState, side: SideIndex): boolean {
-  return state.sides[side].team.some((m, i) => i !== state.sides[side].activeIndex && m.currentHp > 0);
-}
 
 export function applyEndOfTurn(state: BattleState, order: SideIndex[]): BattleEvent[] {
   const events: BattleEvent[] = [];

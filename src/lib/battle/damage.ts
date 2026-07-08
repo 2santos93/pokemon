@@ -24,11 +24,8 @@ export function computeDamage(params: {
     Math.floor(Math.floor((Math.floor((2 * level) / 5) + 2) * move.power * atk) / def / 50) + 2;
 
   const stab = attacker.types.includes(move.type) ? 1.5 : 1;
-  // STAB is floored on its own so type effectiveness scales an INTEGER base
-  // (per-stage rounding, as the main-series games do). Without this separate
-  // floor a neutral 61.5 truncates to 61 while its super-effective counterpart
-  // is 123 — not exactly double. Flooring after STAB keeps the x2 / x0.5
-  // effectiveness relationship exact.
+  // floor STAB separately (per-stage rounding, like the mainline games) so the
+  // later x2/x0.5 effectiveness multiplier stays exact instead of drifting
   const baseWithStab = Math.floor(base * stab);
   const crit = rng.chance(CRIT_CHANCE_PERCENT);
   const critMod = crit ? CRIT_MULTIPLIER : 1;

@@ -42,11 +42,7 @@ export interface RoomView {
   awaiting: SideIndex[];
   /** Whether each slot has a pending action locked in for the current decision point. */
   submitted: [boolean, boolean];
-  /**
-   * Epoch-ms deadline for the current decision point, or null when no timer is
-   * running (not in battle, battle over, or nobody connected). The client shows
-   * an approximate countdown; the server is authoritative and resolves on expiry.
-   */
+  /** Epoch-ms deadline for the current decision point, or null if no timer is running. Server resolves on expiry; client's countdown is approximate. */
   turnDeadline: number | null;
   winnerSlot: SideIndex | null;
 }

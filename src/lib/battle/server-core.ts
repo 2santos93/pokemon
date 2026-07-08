@@ -64,8 +64,7 @@ export class BattleServer {
     const result = joinRoom(entry.room, token);
     if ("error" in result) return null;
     entry.room = result.room;
-    // A reconnect mid-battle re-starts the timer if it had been paused because
-    // no one was connected; a timer already running is left untouched.
+    // resumes a timer paused while nobody was connected; a running timer is untouched
     this.resumeTurnTimerIfPaused(roomId, entry);
     this.broadcast(roomId);
     return result.slot;
@@ -120,8 +119,7 @@ export class BattleServer {
     const entry = this.rooms.get(roomId);
     if (!entry) return;
     entry.room = applyDisconnect(entry.room, slot);
-    // Pause the timer while nobody is connected so a fully-empty room doesn't
-    // burn through turns; a reconnect resumes it (see join()).
+    // pause timer when empty so turns don't burn unattended; join() resumes it
     if (this.connectedCount(entry) === 0) this.clearTurnTimer(entry);
     this.broadcast(roomId);
   }
@@ -129,10 +127,9 @@ export class BattleServer {
   private isLegal(room: Room, slot: SideIndex, action: TurnAction): boolean {
     if (!room.battle) return false;
     return legalActions(room.battle, slot).some((legal) =>
-      legal.kind === action.kind &&
-      (legal.kind === "move"
-        ? legal.moveIndex === (action as { moveIndex: number }).moveIndex
-        : legal.teamIndex === (action as { teamIndex: number }).teamIndex),
+      action.kind === "move"
+        ? legal.kind === "move" && legal.moveIndex === action.moveIndex
+        : legal.kind === "switch" && legal.teamIndex === action.teamIndex,
     );
   }
 
@@ -158,9 +155,7 @@ export class BattleServer {
     if (result) {
       entry.room = result.room;
       for (const slot of SLOTS) this.deps.send(roomId, slot, { type: "events", events: result.events });
-      // A turn resolved → a fresh decision point begins; restart the clock.
-      // (If still waiting on the other side, the running timer is left alone.)
-      this.armTurnTimer(roomId, entry);
+      this.armTurnTimer(roomId, entry); // fresh decision point → restart the clock
     }
     this.broadcast(roomId);
   }

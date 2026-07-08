@@ -1,3 +1,4 @@
+import { hasHealthyBench } from "./bench";
 import { computeDamage } from "./damage";
 import type { RNG } from "./rng";
 import { effectivenessLabel } from "./type-chart";
@@ -5,10 +6,6 @@ import type { BattleEvent, BattleState, SideIndex } from "./types";
 
 function activeOf(state: BattleState, side: SideIndex) {
   return state.sides[side].team[state.sides[side].activeIndex]!;
-}
-
-function hasHealthyBench(state: BattleState, side: SideIndex): boolean {
-  return state.sides[side].team.some((m, i) => i !== state.sides[side].activeIndex && m.currentHp > 0);
 }
 
 /** Mutates `state`. Resolves one move by `side`'s active Pokémon against the opponent. */
@@ -25,8 +22,7 @@ export function executeMove(
   const slot = attacker.moves[moveIndex]!;
   if (!slot) return events;
 
-  // Sleep: a Pokémon asleep for N turns is prevented from moving for N turns,
-  // then wakes and acts on turn N+1.
+  // asleep N turns → prevented N turns, wakes and acts on turn N+1
   if (attacker.status === "sleep") {
     if (attacker.sleepTurns > 0) {
       attacker.sleepTurns -= 1;

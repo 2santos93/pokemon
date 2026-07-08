@@ -79,11 +79,7 @@ export type BattleEvent =
   | { type: "timeout"; side: SideIndex; pokemon: string }
   | { type: "win"; side: SideIndex };
 
-/**
- * What each side does in a turn, as fed to the engine. `null` means the side
- * ran out its turn timer and does nothing this turn — clients never send this;
- * only the server injects it on timeout. See `resolveTurn`.
- */
+/** Null means the side timed out and does nothing this turn — only the server injects this, never a client. */
 export type TurnInput = TurnAction | null;
 
 export interface TurnResult {

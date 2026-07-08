@@ -1,10 +1,7 @@
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import type { BattleEvent } from "./types";
 
-/**
- * Maps one BattleEvent to its localized battle-log line(s), using the
- * dictionary's `battle.log` phrase builders. Pure and side-effect free.
- */
+/** Maps a BattleEvent to its localized battle-log line(s). */
 export function describeEvent(event: BattleEvent, d: Dictionary): string[] {
   const log = d.battle.log;
 

@@ -27,12 +27,7 @@ export function createBattle(
   };
 }
 
-/**
- * Mutates `state`. No-ops (returns `[]`, mutates nothing) if `teamIndex` is out of
- * range, targets the currently active slot, or targets a fainted Pokémon — this
- * guards against illegal switches that would otherwise crash or leave a fainted
- * Pokémon active.
- */
+/** Mutates `state`. No-ops on an illegal switch (bad index, active slot, or fainted target). */
 function applySwitch(state: BattleState, side: SideIndex, teamIndex: number): BattleEvent[] {
   const s = state.sides[side]!;
   const target = s.team[teamIndex];
@@ -44,11 +39,7 @@ function applySwitch(state: BattleState, side: SideIndex, teamIndex: number): Ba
   return [{ type: "switch", side, from, to: target.name }];
 }
 
-/**
- * Callers (the room layer) should still validate actions against `legalActions()`
- * before calling this; the switch guards here are defense-in-depth against
- * illegal/untrusted input, not a substitute for that validation.
- */
+/** Callers should validate against `legalActions()` first — the guards here are defense-in-depth, not a substitute. */
 export function resolveTurn(
   state: BattleState,
   actions: [TurnInput, TurnInput],
@@ -60,10 +51,8 @@ export function resolveTurn(
 
   for (const side of order) {
     if (next.winner !== null) break;
-    // A side whose active fainted earlier this turn can't act with a move.
-    if (next.forcedSwitch[side]) continue;
+    if (next.forcedSwitch[side]) continue; // active already fainted; can't act
     const action = actions[side];
-    // A null action means the side timed out and does nothing this turn.
     if (action === null) continue;
     if (action.kind === "switch") {
       events.push(...applySwitch(next, side, action.teamIndex));
@@ -77,11 +66,7 @@ export function resolveTurn(
   return { state: next, events };
 }
 
-/**
- * Callers (the room layer) should still validate `teamIndex` against
- * `legalActions()` before calling this; the fallback below is defense-in-depth
- * against illegal/untrusted input, not a substitute for that validation.
- */
+/** Callers should validate `teamIndex` against `legalActions()` first — the fallback below is defense-in-depth, not a substitute. */
 export function chooseReplacement(
   state: BattleState,
   side: SideIndex,

@@ -109,9 +109,8 @@ export function startBattle(room: Room): Room {
   const p1 = room.players[1];
   if (!p0?.team || p0.lead == null || !p1?.team || p1.lead == null) return room;
   const next = structuredClone(room);
-  // Clear any pendingAction submitted during lobby/teaming — the pure API
-  // allows applyAction to be called before a battle exists, and such stale
-  // actions must not survive into turn 1 of the fresh battle.
+  // applyAction can be called before a battle exists; clear any stale pendingAction
+  // from lobby/teaming so it doesn't leak into turn 1.
   if (next.players[0]) next.players[0]!.pendingAction = null;
   if (next.players[1]) next.players[1]!.pendingAction = null;
   next.battle = createBattle(
@@ -144,24 +143,22 @@ function finish(room: Room): Room {
   return room;
 }
 
-/**
- * Resolve the current decision point now, filling any un-submitted awaited slot
- * with a "did nothing" pass (normal turn) or a forced auto-switch to the first
- * living team member (forced-switch sub-phase). When `emitTimeouts` is true, a
- * `{type:"timeout"}` event is emitted for each slot that failed to submit, so
- * the log can announce the lost turn before the acting side's move.
- *
- * IMPORTANT — RNG lifetime: `rng` MUST be a single long-lived RNG instance
- * created once per room and advanced across the entire battle (every resolve for
- * that room should pass the *same* instance, threading its state forward). Do
- * NOT construct a freshly-seeded RNG per turn — doing so would replay identical
- * crit/miss/speed-tie rolls turn after turn and make battles non-random.
- */
 function timeoutEvent(battle: BattleState, side: SideIndex): BattleEvent {
   const s = battle.sides[side];
   return { type: "timeout", side, pokemon: s.team[s.activeIndex]!.name };
 }
 
+function clearPendingActions(room: Room): void {
+  room.players[0]!.pendingAction = null;
+  room.players[1]!.pendingAction = null;
+}
+
+/**
+ * Resolves the current decision point, defaulting any unfilled slot to a pass
+ * (or auto-switch during a forced switch). `rng` must be the one long-lived
+ * instance for this room's whole battle — reseeding per turn would replay
+ * identical crit/miss/speed-tie rolls.
+ */
 function resolveDecision(
   room: Room,
   rng: RNG,
@@ -174,8 +171,7 @@ function resolveDecision(
 
   const forced = battle.forcedSwitch[0] || battle.forcedSwitch[1];
   if (forced) {
-    // Forced-switch sub-phase: a flagged slot either submitted a switch or timed
-    // out; a timeout auto-switches to the first living team member.
+    // a flagged slot either submitted a switch or timed out (auto-switches to first living mon)
     for (const slot of awaiting) {
       const submitted = next.players[slot]!.pendingAction;
       if (submitted === null && emitTimeouts) events.push(timeoutEvent(next.battle!, slot));
@@ -186,11 +182,7 @@ function resolveDecision(
       events.push(...result.events);
       next.players[slot]!.pendingAction = null;
     }
-    // The non-forced side isn't awaited here but may have submitted a stale
-    // action during the forced-switch window; clear both so nothing leaks
-    // into the next full turn.
-    next.players[0]!.pendingAction = null;
-    next.players[1]!.pendingAction = null;
+    clearPendingActions(next); // non-forced side may have a stale action from this window
   } else {
     if (emitTimeouts) {
       for (const slot of awaiting) {
@@ -204,8 +196,7 @@ function resolveDecision(
     );
     next.battle = result.state;
     events.push(...result.events);
-    next.players[0]!.pendingAction = null;
-    next.players[1]!.pendingAction = null;
+    clearPendingActions(next);
   }
 
   return { room: finish(next), events };
@@ -285,10 +276,7 @@ export function viewFor(room: Room, slot: SideIndex, turnDeadline: number | null
     room.players[0]?.pendingAction != null,
     room.players[1]?.pendingAction != null,
   ];
-  // Per-player clock: a player only sees the countdown while it's their turn to
-  // act AND they haven't locked in yet. Once you submit (or it isn't your
-  // decision), your clock stops; the opponent's keeps running independently on
-  // its own copy of the deadline. Timing out only costs the slot that stalled.
+  // countdown shows only while this slot is awaited and unsubmitted; submitting stops your clock, not the opponent's
   const yourDeadline = awaiting.includes(slot) && !submitted[slot] ? turnDeadline : null;
   return {
     roomId: room.id,
