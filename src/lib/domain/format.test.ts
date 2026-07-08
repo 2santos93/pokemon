@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatPokemonName, officialArtworkUrl, toSpriteCdn } from "./format";
+import { formatPokemonName, officialArtworkUrl } from "./format";
 
 describe("formatPokemonName", () => {
   it("capitalizes simple slugs", () => {
@@ -19,25 +19,9 @@ describe("formatPokemonName", () => {
 });
 
 describe("officialArtworkUrl", () => {
-  it("builds the sprites CDN url from the id", () => {
+  it("builds the raw.githubusercontent url from the id", () => {
     expect(officialArtworkUrl(25)).toBe(
-      "https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/other/official-artwork/25.png",
+      "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png",
     );
-  });
-});
-
-describe("toSpriteCdn", () => {
-  it("rewrites a raw.githubusercontent sprite url to the jsDelivr mirror", () => {
-    expect(
-      toSpriteCdn("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/614.png"),
-    ).toBe("https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/614.png");
-  });
-  it("rewrites back sprites too", () => {
-    expect(
-      toSpriteCdn("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/643.png"),
-    ).toBe("https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/back/643.png");
-  });
-  it("leaves unrelated urls untouched", () => {
-    expect(toSpriteCdn("https://example.com/foo.png")).toBe("https://example.com/foo.png");
   });
 });

@@ -1,5 +1,5 @@
 import { isTypeSlug, STAT_SLUGS, type StatSlug } from "@/lib/domain/types";
-import { formatPokemonName, officialArtworkUrl, toSpriteCdn } from "@/lib/domain/format";
+import { formatPokemonName, officialArtworkUrl } from "@/lib/domain/format";
 import type { MoveResponse, PokemonResponse } from "@/lib/pokeapi/types";
 import { getMove, getPokemon } from "@/lib/pokeapi/client";
 import { inBatches } from "@/lib/pokeapi/batch";
@@ -131,8 +131,8 @@ export function buildBattlePokemon(
     moves: selectMoves(candidateMoves, rng),
     status: "none",
     sleepTurns: 0,
-    frontSprite: pokemon.sprites.front_default ? toSpriteCdn(pokemon.sprites.front_default) : artwork,
-    backSprite: pokemon.sprites.back_default ? toSpriteCdn(pokemon.sprites.back_default) : artwork,
+    frontSprite: pokemon.sprites.front_default ?? artwork,
+    backSprite: pokemon.sprites.back_default ?? artwork,
   };
 }
 
