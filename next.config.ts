@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
         // Primary sprite host — same PokeAPI/sprites repo, no rate limiting.
         protocol: "https",
         hostname: "cdn.jsdelivr.net",
-        pathname: "/gh/PokeAPI/sprites**",
+        pathname: "/gh/PokeAPI/**",
       },
       {
         // Kept for any legacy/direct raw URLs that slip through.
