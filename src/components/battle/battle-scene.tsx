@@ -116,15 +116,15 @@ export function BattleScene({ view, events }: { view: RoomView; events: BattleEv
         boxShadow: "inset 0 0 0 3px rgba(0,0,0,0.15), inset 0 2px 12px rgba(0,0,0,0.25)",
       }}
     >
-      {/* Hidden preload: warms the sprite cache for every team member so switches render instantly. */}
-      <div className="hidden" aria-hidden="true">
+      {/* Hidden preload: warms the optimized-image cache (via BattleSprite/next/image) for every
+          team member so switches render instantly and clients never hit raw.githubusercontent
+          directly. Visually hidden via clipping (not display:none) so the browser still fetches. */}
+      <div className="pointer-events-none absolute h-0 w-0 overflow-hidden opacity-0" aria-hidden="true">
         {foeSide.team.map((pokemon, i) => (
-          // eslint-disable-next-line @next/next/no-img-element -- plain <img> to prime the browser cache, not rendered UI
-          <img key={`preload-foe-${i}`} src={pokemon.frontSprite} alt="" width={1} height={1} loading="eager" />
+          <BattleSprite key={`preload-foe-${i}`} src={pokemon.frontSprite} alt="" />
         ))}
         {mySide.team.map((pokemon, i) => (
-          // eslint-disable-next-line @next/next/no-img-element -- plain <img> to prime the browser cache, not rendered UI
-          <img key={`preload-my-${i}`} src={pokemon.backSprite} alt="" width={1} height={1} loading="eager" />
+          <BattleSprite key={`preload-my-${i}`} src={pokemon.backSprite} alt="" />
         ))}
       </div>
 

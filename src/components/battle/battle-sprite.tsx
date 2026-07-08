@@ -42,7 +42,6 @@ export function BattleSprite({
       alt={alt}
       width={128}
       height={128}
-      unoptimized
       onError={() => setFailed(true)}
       className={className}
       style={{ imageRendering: "pixelated" }}
