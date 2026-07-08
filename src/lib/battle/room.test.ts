@@ -364,4 +364,16 @@ describe("room disconnect / rematch / view", () => {
     expect(viewFor(room, 0).turnDeadline).toBeNull();
     expect(viewFor(room, 0, 123456).turnDeadline).toBe(123456);
   });
+
+  it("viewFor gives each player their own clock that stops once they submit", () => {
+    const room = battling();
+    const deadline = 123456;
+    // Fresh turn: both are awaited and unsubmitted, so both see the countdown.
+    expect(viewFor(room, 0, deadline).turnDeadline).toBe(deadline);
+    expect(viewFor(room, 1, deadline).turnDeadline).toBe(deadline);
+    // Once slot 0 locks in, its clock stops (null) but slot 1's keeps running.
+    const acted = applyAction(room, 0, { kind: "move", moveIndex: 0 });
+    expect(viewFor(acted, 0, deadline).turnDeadline).toBeNull();
+    expect(viewFor(acted, 1, deadline).turnDeadline).toBe(deadline);
+  });
 });

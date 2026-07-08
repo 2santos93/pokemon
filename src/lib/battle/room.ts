@@ -280,6 +280,16 @@ function playerView(player: RoomPlayer | null): PlayerView | null {
 }
 
 export function viewFor(room: Room, slot: SideIndex, turnDeadline: number | null = null): RoomView {
+  const awaiting = awaitingSlots(room);
+  const submitted: [boolean, boolean] = [
+    room.players[0]?.pendingAction != null,
+    room.players[1]?.pendingAction != null,
+  ];
+  // Per-player clock: a player only sees the countdown while it's their turn to
+  // act AND they haven't locked in yet. Once you submit (or it isn't your
+  // decision), your clock stops; the opponent's keeps running independently on
+  // its own copy of the deadline. Timing out only costs the slot that stalled.
+  const yourDeadline = awaiting.includes(slot) && !submitted[slot] ? turnDeadline : null;
   return {
     roomId: room.id,
     phase: room.phase,
@@ -287,9 +297,9 @@ export function viewFor(room: Room, slot: SideIndex, turnDeadline: number | null
     players: [playerView(room.players[0]), playerView(room.players[1])],
     yourTeam: room.players[slot]?.team ?? null,
     battle: room.battle,
-    awaiting: awaitingSlots(room),
-    submitted: [room.players[0]?.pendingAction != null, room.players[1]?.pendingAction != null],
-    turnDeadline,
+    awaiting,
+    submitted,
+    turnDeadline: yourDeadline,
     winnerSlot: room.winnerSlot,
   };
 }
