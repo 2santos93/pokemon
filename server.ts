@@ -21,7 +21,7 @@ app.prepare().then(() => {
   const battle = new BattleServer({
     rollTeam: (rng) => rollBattleTeam(rng),
     send: (roomId, slot, msg) => io.to(`${roomId}:${slot}`).emit("message", msg),
-    // Optional override for the per-turn timer (ms); defaults to 15s in the engine.
+    // Turn timer override (ms); engine defaults to 15s.
     turnMs: process.env.BATTLE_TURN_MS ? Number(process.env.BATTLE_TURN_MS) : undefined,
   });
 

@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { ClientMessage, Gender, RoomView } from "@/lib/battle/protocol";
 import { useI18n } from "@/lib/i18n/provider";
 import { TrainerAvatar } from "./trainer-avatar";
+import { WaitingIndicator } from "./waiting-indicator";
 
 const GENDERS: Gender[] = ["male", "female"];
 
@@ -22,18 +23,7 @@ export function LobbyForm({
   const alreadySubmitted = Boolean(you?.nickname);
 
   if (alreadySubmitted) {
-    return (
-      <div className="flex flex-col items-center gap-4 py-6 text-center">
-        <span
-          aria-hidden
-          className="h-4 w-4 rounded-full bg-[var(--scan)]"
-          style={{ animation: "blink 1.6s ease-in-out infinite" }}
-        />
-        <p className="readout text-sm font-bold text-[var(--foreground)]">
-          {d.battle.waitingOpponent}
-        </p>
-      </div>
-    );
+    return <WaitingIndicator text={d.battle.waitingOpponent} />;
   }
 
   const ready = nickname.trim().length > 0;

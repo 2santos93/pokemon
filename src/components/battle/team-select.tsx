@@ -5,6 +5,7 @@ import { useI18n } from "@/lib/i18n/provider";
 import { TypeBadge } from "@/components/pokedex/type-badge";
 import { TYPE_COLORS } from "@/components/pokedex/type-colors";
 import { BattleSprite } from "./battle-sprite";
+import { WaitingIndicator } from "./waiting-indicator";
 
 export function TeamSelect({
   view,
@@ -17,16 +18,7 @@ export function TeamSelect({
   const you = view.players[view.you];
 
   if (you?.lead != null) {
-    return (
-      <div className="flex flex-col items-center gap-4 py-10 text-center">
-        <span
-          aria-hidden
-          className="h-4 w-4 rounded-full bg-[var(--scan)]"
-          style={{ animation: "blink 1.6s ease-in-out infinite" }}
-        />
-        <p className="readout text-sm font-bold text-[var(--foreground)]">{d.battle.waitingLead}</p>
-      </div>
-    );
+    return <WaitingIndicator text={d.battle.waitingLead} className="py-10" />;
   }
 
   if (view.yourTeam == null) {
@@ -53,7 +45,7 @@ export function TeamSelect({
               className="group relative flex flex-col items-center overflow-hidden rounded-2xl border border-white/10 bg-[var(--screen-raised)] p-4 text-left transition-all duration-200 hover:-translate-y-1.5 hover:border-white/25"
               style={{ boxShadow: "0 6px 18px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)" }}
             >
-              {/* type-colored energy glow behind the sprite */}
+              {/* type-colored glow behind sprite */}
               <div
                 className="pointer-events-none absolute inset-0 opacity-30 transition-opacity duration-200 group-hover:opacity-60"
                 style={{ background: `radial-gradient(130px 130px at 50% 32%, ${accent}, transparent 70%)` }}

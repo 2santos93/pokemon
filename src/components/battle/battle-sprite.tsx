@@ -14,14 +14,13 @@ export function BattleSprite({
 }) {
   const [failed, setFailed] = useState(false);
 
-  // Reset failed state when src changes so a new Pokémon's sprite retries
+  // Reset on src change so a new sprite gets a fresh retry.
   useEffect(() => {
     setFailed(false);
   }, [src]);
 
   if (!src || failed) {
-    // Local, network-free fallback so a rate-limited/missing sprite never shows
-    // a broken-image icon.
+    // Local SVG fallback — avoids a broken-image icon on missing/rate-limited sprites.
     return (
       <svg
         role="img"

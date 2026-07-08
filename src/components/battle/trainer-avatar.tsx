@@ -32,10 +32,7 @@ const PALETTE: Record<Gender, {
   },
 };
 
-/**
- * Original blocky pixel-art trainer bust (no copyrighted character likeness).
- * Male reads red cap + blue shirt; female reads rose long hair + white shirt.
- */
+// Original pixel-art trainer bust — no copyrighted character likeness.
 export function TrainerAvatar({ gender, className }: { gender: Gender; className?: string }) {
   const p = PALETTE[gender];
   return (

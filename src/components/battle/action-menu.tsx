@@ -22,8 +22,7 @@ export function ActionMenu({
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("root");
 
-  // Reset to the root menu whenever a fresh decision point begins: a new
-  // turn resolves, or a forced-switch sub-phase starts.
+  // Reset menu on new turn or forced-switch phase.
   useEffect(() => {
     setMode("root");
   }, [view.battle?.turn, view.battle?.forcedSwitch[view.you]]);
@@ -32,8 +31,7 @@ export function ActionMenu({
 
   const myTurn = view.awaiting.includes(view.you);
   const alreadySubmitted = view.submitted[view.you];
-  // You may only touch the menu during your open selection window. Once you've
-  // locked an action in — or while it's the opponent's sub-phase — it's locked.
+  // Locked once submitted, or while it's not your turn.
   const canAct = myTurn && !alreadySubmitted;
 
   const mySide = view.battle.sides[view.you];
@@ -53,7 +51,6 @@ export function ActionMenu({
 
   return (
     <div className="mt-3 space-y-2">
-      {/* Turn status + countdown — always visible during the battle. */}
       <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-[var(--surface)] px-4 py-2">
         <span
           className={`readout shrink-0 text-xs font-bold uppercase tracking-widest ${

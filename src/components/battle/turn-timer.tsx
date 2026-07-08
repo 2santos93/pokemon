@@ -2,11 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-/**
- * Approximate per-turn countdown. The server is authoritative and resolves on
- * expiry; this only visualizes `turnDeadline` (epoch ms). Renders nothing when
- * no timer is running.
- */
+// Visualizes turnDeadline (epoch ms); server is authoritative and resolves on expiry.
 export function TurnTimer({
   deadline,
   className,
@@ -15,8 +11,7 @@ export function TurnTimer({
   className?: string;
 }) {
   const [remainingMs, setRemainingMs] = useState(0);
-  // Total window for this deadline (first-observed remaining), so the bar is
-  // proportional regardless of the server's configured turn length.
+  // First-observed remaining time, so the bar scales to any turn length.
   const totalRef = useRef(1);
 
   useEffect(() => {
