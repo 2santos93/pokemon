@@ -4,7 +4,9 @@ Explorador en tiempo real de las ~1025 especies Pokémon (Generaciones I–IX) c
 
 ![Captura de la Pokédex mostrando la cuadrícula de tarjetas con la barra de filtros](docs/screenshot.png)
 
-**Demo:** https://pokemon-eight-blush.vercel.app
+**Demo:** https://pokedex-battle.onrender.com
+
+> Alojada en un plan gratuito: si el servicio lleva un rato inactivo, el primer acceso puede tardar ~30-60 s en «despertar»; a partir de ahí responde con normalidad.
 
 ## Ejecución
 
@@ -83,8 +85,7 @@ Los tests cubren de forma determinista la lógica de dominio del explorador: con
 
 Más allá de lo pedido, el proyecto incluye un **modo de combate por turnos entre dos jugadores en tiempo real** (Socket.IO), con equipos aleatorios de 3 Pokémon, fórmula de daño real, tabla de efectividad de los 18 tipos, estados y una escena con estética retro. Es un añadido para lucir la PokéAPI; no forma parte de los requisitos.
 
-- Se juega en local/Docker en `http://localhost:3000/battle`: pulsa **Crear combate** y comparte el enlace de la sala con la otra persona.
-- Versión completa desplegada (incluye el combate): https://pokedex-battle.onrender.com — al estar en un plan gratuito, el primer acceso puede tardar ~30-60 s en «despertar».
+- Está disponible en la demo y en local/Docker en `/battle`: pulsa **Crear combate** y comparte el enlace de la sala con la otra persona.
 - El motor de combate vive en `lib/battle` como funciones puras y deterministas (RNG inyectado), con el servidor como autoridad y Socket.IO desacoplado tras una interfaz.
 
 ## Uso de IA
