@@ -72,6 +72,7 @@ export interface Dictionary {
       cantMove: (mon: string, status: string) => string;
       wake: (mon: string) => string;
       switch: (to: string) => string;
+      timeout: (mon: string) => string;
       win: (nick: string) => string;
     };
   };

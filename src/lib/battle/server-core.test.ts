@@ -36,6 +36,50 @@ function lastState(sent: { slot: number; msg: ServerMessage }[], slot?: number) 
   return states.at(-1)!.msg as Extract<ServerMessage, { type: "state" }>;
 }
 
+function eventsOf(sent: { slot: number; msg: ServerMessage }[]) {
+  return sent
+    .filter((s) => s.msg.type === "events" && s.slot === 0)
+    .flatMap((s) => (s.msg as Extract<ServerMessage, { type: "events" }>).events);
+}
+
+/** Harness with a controllable clock + one-shot timers so no real time passes. */
+function timerHarness(turnMs = 15_000) {
+  const sent: { slot: number; msg: ServerMessage }[] = [];
+  let time = 1_000;
+  let nextId = 1;
+  let scheduled: { id: number; fn: () => void; at: number }[] = [];
+  const deps: ServerDeps = {
+    rollTeam: async () => team("T"),
+    send: (_room, slot, msg) => sent.push({ slot, msg }),
+    now: () => time,
+    turnMs,
+    setTimer: (fn, ms) => {
+      const id = nextId++;
+      scheduled.push({ id, fn, at: time + ms });
+      return id;
+    },
+    clearTimer: (handle) => {
+      scheduled = scheduled.filter((s) => s.id !== handle);
+    },
+  };
+  const advance = (ms: number) => {
+    time += ms;
+    const due = scheduled.filter((s) => s.at <= time).sort((a, b) => a.at - b.at);
+    for (const d of due) {
+      scheduled = scheduled.filter((s) => s.id !== d.id);
+      d.fn();
+    }
+  };
+  async function startedBattle(server: BattleServer) {
+    server.join("r"); server.join("r");
+    await server.message("r", 0, { type: "setProfile", nickname: "Ash", gender: "male" });
+    await server.message("r", 1, { type: "setProfile", nickname: "Misty", gender: "female" });
+    await server.message("r", 0, { type: "chooseLead", teamIndex: 0 });
+    await server.message("r", 1, { type: "chooseLead", teamIndex: 0 });
+  }
+  return { server: new BattleServer(deps), sent, advance, startedBattle, now: () => time };
+}
+
 describe("BattleServer", () => {
   it("assigns slots 0 then 1 and rejects a third", () => {
     const { server } = harness();
@@ -152,6 +196,94 @@ describe("BattleServer", () => {
     server.join("r", "b");
     server.disconnect("r", 0);
     expect(server.join("r", "a")).toBe(0);
+  });
+
+  it("arms a turn timer when the battle starts and exposes the deadline in the view", async () => {
+    const h = timerHarness(15_000);
+    await h.startedBattle(h.server);
+    const view = lastState(h.sent).view;
+    expect(view.phase).toBe("battle");
+    expect(view.turnDeadline).toBe(h.now() + 15_000);
+  });
+
+  it("does not fire the timer if both players submit before the deadline", async () => {
+    const h = timerHarness();
+    await h.startedBattle(h.server);
+    await h.server.message("r", 0, { type: "action", action: { kind: "move", moveIndex: 0 } });
+    await h.server.message("r", 1, { type: "action", action: { kind: "move", moveIndex: 0 } });
+    // Turn resolved from real actions — no timeout event, fresh deadline for next turn.
+    expect(eventsOf(h.sent).some((e) => e.type === "timeout")).toBe(false);
+    expect(eventsOf(h.sent).some((e) => e.type === "move")).toBe(true);
+    expect(lastState(h.sent).view.turnDeadline).toBe(h.now() + 15_000);
+  });
+
+  it("on timeout, the idle side loses its turn while the side that chose still acts", async () => {
+    const h = timerHarness();
+    await h.startedBattle(h.server);
+    // Only slot 0 chooses; slot 1 stalls.
+    await h.server.message("r", 0, { type: "action", action: { kind: "move", moveIndex: 0 } });
+    h.advance(15_000);
+    const events = eventsOf(h.sent);
+    expect(events.some((e) => e.type === "timeout" && e.side === 1)).toBe(true);
+    expect(events.some((e) => e.type === "timeout" && e.side === 0)).toBe(false);
+    expect(events.some((e) => e.type === "move" && e.side === 0)).toBe(true);
+    expect(events.some((e) => e.type === "move" && e.side === 1)).toBe(false);
+    expect(lastState(h.sent).view.battle?.turn).toBe(2);
+  });
+
+  it("when neither side chooses, a full timeout skips both and advances the turn", async () => {
+    const h = timerHarness();
+    await h.startedBattle(h.server);
+    h.advance(15_000);
+    const events = eventsOf(h.sent);
+    expect(events.some((e) => e.type === "timeout" && e.side === 0)).toBe(true);
+    expect(events.some((e) => e.type === "timeout" && e.side === 1)).toBe(true);
+    expect(events.some((e) => e.type === "move")).toBe(false);
+    expect(lastState(h.sent).view.battle?.turn).toBe(2);
+  });
+
+  it("re-arms the timer for the next turn so successive timeouts keep resolving", async () => {
+    const h = timerHarness();
+    await h.startedBattle(h.server);
+    h.advance(15_000);
+    expect(lastState(h.sent).view.battle?.turn).toBe(2);
+    const deadlineTurn2 = lastState(h.sent).view.turnDeadline;
+    expect(deadlineTurn2).toBe(h.now() + 15_000);
+    h.advance(15_000);
+    expect(lastState(h.sent).view.battle?.turn).toBe(3);
+  });
+
+  it("clears the timer on forfeit — no further timeouts fire", async () => {
+    const h = timerHarness();
+    await h.startedBattle(h.server);
+    await h.server.message("r", 1, { type: "forfeit" });
+    expect(lastState(h.sent).view.turnDeadline).toBeNull();
+    const before = h.sent.length;
+    h.advance(60_000);
+    expect(h.sent.length).toBe(before); // nothing scheduled fired
+  });
+
+  it("pauses the timer while nobody is connected and resumes it on reconnect", async () => {
+    const h = timerHarness();
+    h.server.join("r", "tok-a");
+    h.server.join("r", "tok-b");
+    await h.server.message("r", 0, { type: "setProfile", nickname: "Ash", gender: "male" });
+    await h.server.message("r", 1, { type: "setProfile", nickname: "Misty", gender: "female" });
+    await h.server.message("r", 0, { type: "chooseLead", teamIndex: 0 });
+    await h.server.message("r", 1, { type: "chooseLead", teamIndex: 0 });
+    expect(lastState(h.sent).view.turnDeadline).not.toBeNull();
+
+    h.server.disconnect("r", 0);
+    h.server.disconnect("r", 1);
+    // With everyone gone the timer is paused: advancing time fires nothing.
+    const before = h.sent.length;
+    h.advance(60_000);
+    expect(h.sent.length).toBe(before);
+
+    // Reconnecting re-arms a fresh timer.
+    expect(h.server.join("r", "tok-a")).toBe(0);
+    const view = lastState(h.sent, 0).view;
+    expect(view.turnDeadline).toBe(h.now() + 15_000);
   });
 
   it("guards against a concurrent duplicate team roll while one is in flight", async () => {

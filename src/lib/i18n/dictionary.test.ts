@@ -12,4 +12,9 @@ describe("dictionaries", () => {
     expect(getDictionary("es").filters.results(1)).toBe("1 Pokémon");
     expect(getDictionary("en").filters.results(2)).toBe("2 Pokémon");
   });
+  it.each(["es", "en"] as const)("%s has a turn-timeout log line naming the Pokémon", (locale) => {
+    const line = getDictionary(locale).battle.log.timeout("Beartic");
+    expect(line).toBeTruthy();
+    expect(line).toContain("Beartic");
+  });
 });

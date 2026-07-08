@@ -34,4 +34,9 @@ describe("orderActions", () => {
     // 100 * 0.5 = 50 < 60 → side 1 first
     expect(orderActions(s, [move, move], createRng(1))[0]).toBe(1);
   });
+  it("a null (timed-out) action is ordered last", () => {
+    const s = state(mon(1), mon(200));
+    // Side 0 is faster... but it timed out (null), so side 1 (acting) goes first.
+    expect(orderActions(s, [null, move], createRng(1))[0]).toBe(1);
+  });
 });

@@ -8,6 +8,7 @@ import type {
   BattleState,
   SideIndex,
   TurnAction,
+  TurnInput,
   TurnResult,
 } from "./types";
 
@@ -50,7 +51,7 @@ function applySwitch(state: BattleState, side: SideIndex, teamIndex: number): Ba
  */
 export function resolveTurn(
   state: BattleState,
-  actions: [TurnAction, TurnAction],
+  actions: [TurnInput, TurnInput],
   rng: RNG,
 ): TurnResult {
   const next: BattleState = structuredClone(state);
@@ -62,6 +63,8 @@ export function resolveTurn(
     // A side whose active fainted earlier this turn can't act with a move.
     if (next.forcedSwitch[side]) continue;
     const action = actions[side];
+    // A null action means the side timed out and does nothing this turn.
+    if (action === null) continue;
     if (action.kind === "switch") {
       events.push(...applySwitch(next, side, action.teamIndex));
     } else {

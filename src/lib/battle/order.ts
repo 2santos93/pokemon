@@ -1,17 +1,19 @@
 import type { RNG } from "./rng";
-import type { BattlePokemon, BattleState, SideIndex, TurnAction } from "./types";
+import type { BattlePokemon, BattleState, SideIndex, TurnInput } from "./types";
 
 function effectiveSpeed(mon: BattlePokemon): number {
   return mon.status === "paralysis" ? Math.floor(mon.stats.speed * 0.5) : mon.stats.speed;
 }
 
-function movePriority(action: TurnAction, mon: BattlePokemon): number {
+function movePriority(action: TurnInput, mon: BattlePokemon): number {
+  // A timed-out side (null) does nothing; sort it last — its position is moot.
+  if (action === null) return -Infinity;
   return action.kind === "switch" ? 6 : mon.moves[action.moveIndex]?.move.priority ?? 0;
 }
 
 export function orderActions(
   state: BattleState,
-  actions: [TurnAction, TurnAction],
+  actions: [TurnInput, TurnInput],
   rng: RNG,
 ): SideIndex[] {
   const active0 = state.sides[0].team[state.sides[0].activeIndex]!;

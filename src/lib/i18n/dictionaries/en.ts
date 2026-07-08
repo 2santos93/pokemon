@@ -125,6 +125,7 @@ export const en: Dictionary = {
       cantMove: (mon, status) => `${mon} is ${status.toLowerCase()} and can't move!`,
       wake: (mon) => `${mon} woke up!`,
       switch: (to) => `Go, ${to}!`,
+      timeout: (mon) => `Time's up! ${mon} lost its turn.`,
       win: (nick) => `${nick} wins the battle!`,
     },
   },

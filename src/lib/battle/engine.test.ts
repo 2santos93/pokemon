@@ -37,6 +37,28 @@ describe("engine", () => {
     expect(s.turn).toBe(1); // original untouched
   });
 
+  it("resolveTurn: a null (timed-out) action does nothing while the opponent still acts", () => {
+    const s = createBattle({ team: team("A"), lead: 0 }, { team: team("B"), lead: 0 });
+    // Side 0 timed out (null); side 1 attacks.
+    const { state, events } = resolveTurn(s, [null, { kind: "move", moveIndex: 0 }], createRng(3));
+    expect(state.turn).toBe(2);
+    // The passer (side 0) never moved.
+    expect(events.some((e) => e.type === "move" && e.side === 0)).toBe(false);
+    // The opponent (side 1) did move and dealt damage to side 0's active.
+    expect(events.some((e) => e.type === "move" && e.side === 1)).toBe(true);
+    expect(state.sides[0].team[0]!.currentHp).toBeLessThan(150);
+    expect(state.sides[1].team[0]!.currentHp).toBe(150); // untouched
+  });
+
+  it("resolveTurn: both null (both timed out) — nobody acts, turn still advances", () => {
+    const s = createBattle({ team: team("A"), lead: 0 }, { team: team("B"), lead: 0 });
+    const { state, events } = resolveTurn(s, [null, null], createRng(3));
+    expect(state.turn).toBe(2);
+    expect(events.some((e) => e.type === "move")).toBe(false);
+    expect(state.sides[0].team[0]!.currentHp).toBe(150);
+    expect(state.sides[1].team[0]!.currentHp).toBe(150);
+  });
+
   it("a switch swaps the active mon and dodges nothing else", () => {
     const s = createBattle({ team: team("A"), lead: 0 }, { team: team("B"), lead: 0 });
     const { state } = resolveTurn(s, [{ kind: "switch", teamIndex: 2 }, { kind: "move", moveIndex: 0 }], createRng(3));

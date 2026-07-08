@@ -55,6 +55,11 @@ describe("describeEvent", () => {
     expect(describeEvent(event, d)).toEqual([d.battle.log.faint("Magikarp")]);
   });
 
+  it("narrates a turn timeout", () => {
+    const event: BattleEvent = { type: "timeout", side: 1, pokemon: "Beartic" };
+    expect(describeEvent(event, d)).toEqual([d.battle.log.timeout("Beartic")]);
+  });
+
   it("narrates a paralysis status inflict", () => {
     const event: BattleEvent = { type: "status", side: 0, pokemon: "Raichu", status: "paralysis" };
     expect(describeEvent(event, d)).toEqual([

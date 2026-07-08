@@ -13,6 +13,7 @@ import {
   needsTeamRoll,
   readyToStart,
   resolveIfReady,
+  resolveOnTimeout,
   resetForRematch,
   startBattle,
   viewFor,
@@ -194,6 +195,56 @@ describe("room turn sync", () => {
     expect(afterSwitch.room.players[1]?.pendingAction).toBeNull();
   });
 
+  it("resolveOnTimeout: the side that submitted still acts; the timed-out side does nothing", () => {
+    let room = battling();
+    room = applyAction(room, 0, { kind: "move", moveIndex: 0 }); // only side 0 chose
+    const result = resolveOnTimeout(room, createRng(1))!;
+
+    expect(result).not.toBeNull();
+    expect(result.room.battle!.turn).toBe(2);
+    // Side 0's move landed; side 1 (timed out) never moved.
+    expect(result.events.some((e) => e.type === "move" && e.side === 0)).toBe(true);
+    expect(result.events.some((e) => e.type === "move" && e.side === 1)).toBe(false);
+    // A timeout event was emitted for the side that didn't submit.
+    expect(result.events.some((e) => e.type === "timeout" && e.side === 1)).toBe(true);
+    expect(result.events.some((e) => e.type === "timeout" && e.side === 0)).toBe(false);
+    expect(result.room.players[0]?.pendingAction).toBeNull();
+    expect(result.room.players[1]?.pendingAction).toBeNull();
+  });
+
+  it("resolveOnTimeout: both timed out — two timeout events, nobody moves, turn advances", () => {
+    const room = battling();
+    const result = resolveOnTimeout(room, createRng(1))!;
+    expect(result.room.battle!.turn).toBe(2);
+    expect(result.events.some((e) => e.type === "move")).toBe(false);
+    expect(result.events.some((e) => e.type === "timeout" && e.side === 0)).toBe(true);
+    expect(result.events.some((e) => e.type === "timeout" && e.side === 1)).toBe(true);
+  });
+
+  it("resolveOnTimeout: a forced-switch timeout auto-switches to the first living teammate", () => {
+    let room = battling();
+    const b = room.battle!;
+    const active = b.sides[1].team[b.sides[1].activeIndex]!;
+    b.sides[1].team[b.sides[1].activeIndex] = { ...active, currentHp: 1 } as BattlePokemon;
+    room = applyAction(applyAction(room, 0, { kind: "move", moveIndex: 0 }), 1, { kind: "move", moveIndex: 0 });
+    const afterTurn = resolveIfReady(room, createRng(1))!;
+    expect(afterTurn.room.battle!.forcedSwitch[1]).toBe(true);
+    expect(awaitingSlots(afterTurn.room)).toEqual([1]);
+
+    // Side 1 never picks a replacement — the timer forces one.
+    const afterTimeout = resolveOnTimeout(afterTurn.room, createRng(1))!;
+    expect(afterTimeout.room.battle!.forcedSwitch[1]).toBe(false);
+    expect(afterTimeout.room.battle!.sides[1].activeIndex).not.toBe(b.sides[1].activeIndex);
+    expect(afterTimeout.room.battle!.sides[1].team[afterTimeout.room.battle!.sides[1].activeIndex]!.currentHp)
+      .toBeGreaterThan(0);
+    expect(afterTimeout.events.some((e) => e.type === "timeout" && e.side === 1)).toBe(true);
+  });
+
+  it("resolveOnTimeout returns null when nothing is awaited (battle over / not started)", () => {
+    const room = createRoom("r1");
+    expect(resolveOnTimeout(room, createRng(1))).toBeNull();
+  });
+
   it("applyAction does not mutate the input room", () => {
     const room = battling();
     applyAction(room, 0, { kind: "move", moveIndex: 0 });
@@ -306,5 +357,11 @@ describe("room disconnect / rematch / view", () => {
     expect(view.players[1]?.nickname).toBe("Misty");
     expect(view.awaiting).toEqual([0, 1]);
     expect(view.battle).not.toBeNull();
+  });
+
+  it("viewFor passes through the turn deadline (null by default)", () => {
+    const room = battling();
+    expect(viewFor(room, 0).turnDeadline).toBeNull();
+    expect(viewFor(room, 0, 123456).turnDeadline).toBe(123456);
   });
 });

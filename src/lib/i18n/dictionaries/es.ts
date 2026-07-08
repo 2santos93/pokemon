@@ -125,6 +125,7 @@ export const es: Dictionary = {
       cantMove: (mon, status) => `¡${mon} está ${status.toLowerCase()} y no puede moverse!`,
       wake: (mon) => `¡${mon} se despertó!`,
       switch: (to) => `¡Adelante, ${to}!`,
+      timeout: (mon) => `¡Se acabó el tiempo! ${mon} perdió su turno.`,
       win: (nick) => `¡${nick} gana el combate!`,
     },
   },

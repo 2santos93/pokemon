@@ -42,6 +42,9 @@ export function describeEvent(event: BattleEvent, d: Dictionary): string[] {
     case "switch":
       return [log.switch(event.to)];
 
+    case "timeout":
+      return [log.timeout(event.pokemon)];
+
     case "forcedSwitch":
       return [];
 

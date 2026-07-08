@@ -145,35 +145,42 @@ function finish(room: Room): Room {
 }
 
 /**
- * Resolve the current turn/sub-phase if all awaited sides have submitted an
- * action.
+ * Resolve the current decision point now, filling any un-submitted awaited slot
+ * with a "did nothing" pass (normal turn) or a forced auto-switch to the first
+ * living team member (forced-switch sub-phase). When `emitTimeouts` is true, a
+ * `{type:"timeout"}` event is emitted for each slot that failed to submit, so
+ * the log can announce the lost turn before the acting side's move.
  *
  * IMPORTANT — RNG lifetime: `rng` MUST be a single long-lived RNG instance
- * created once per room and advanced across the entire battle (every call to
- * `resolveIfReady` for that room should pass the *same* instance, threading
- * its state forward). Do NOT construct a freshly-seeded RNG per turn — doing
- * so would replay identical crit/miss/speed-tie rolls turn after turn and
- * make battles non-random.
+ * created once per room and advanced across the entire battle (every resolve for
+ * that room should pass the *same* instance, threading its state forward). Do
+ * NOT construct a freshly-seeded RNG per turn — doing so would replay identical
+ * crit/miss/speed-tie rolls turn after turn and make battles non-random.
  */
-export function resolveIfReady(
+function timeoutEvent(battle: BattleState, side: SideIndex): BattleEvent {
+  const s = battle.sides[side];
+  return { type: "timeout", side, pokemon: s.team[s.activeIndex]!.name };
+}
+
+function resolveDecision(
   room: Room,
   rng: RNG,
-): { room: Room; events: BattleEvent[] } | null {
+  emitTimeouts: boolean,
+): { room: Room; events: BattleEvent[] } {
   const awaiting = awaitingSlots(room);
-  if (awaiting.length === 0) return null;
-  const actions = awaiting.map((slot) => room.players[slot]?.pendingAction ?? null);
-  if (actions.some((a) => a === null)) return null;
-
   const next = structuredClone(room);
   const battle = next.battle!;
   const events: BattleEvent[] = [];
 
   const forced = battle.forcedSwitch[0] || battle.forcedSwitch[1];
   if (forced) {
-    // Forced-switch sub-phase: each flagged slot submitted a switch.
+    // Forced-switch sub-phase: a flagged slot either submitted a switch or timed
+    // out; a timeout auto-switches to the first living team member.
     for (const slot of awaiting) {
-      const action = next.players[slot]!.pendingAction!;
-      const teamIndex = action.kind === "switch" ? action.teamIndex : next.battle!.sides[slot].activeIndex;
+      const submitted = next.players[slot]!.pendingAction;
+      if (submitted === null && emitTimeouts) events.push(timeoutEvent(next.battle!, slot));
+      const teamIndex =
+        submitted?.kind === "switch" ? submitted.teamIndex : next.battle!.sides[slot].activeIndex;
       const result = chooseReplacement(next.battle!, slot, teamIndex);
       next.battle = result.state;
       events.push(...result.events);
@@ -185,9 +192,14 @@ export function resolveIfReady(
     next.players[0]!.pendingAction = null;
     next.players[1]!.pendingAction = null;
   } else {
+    if (emitTimeouts) {
+      for (const slot of awaiting) {
+        if (next.players[slot]!.pendingAction === null) events.push(timeoutEvent(battle, slot));
+      }
+    }
     const result = resolveTurn(
       battle,
-      [next.players[0]!.pendingAction!, next.players[1]!.pendingAction!],
+      [next.players[0]!.pendingAction ?? null, next.players[1]!.pendingAction ?? null],
       rng,
     );
     next.battle = result.state;
@@ -197,6 +209,31 @@ export function resolveIfReady(
   }
 
   return { room: finish(next), events };
+}
+
+/** Resolve the current decision point only if all awaited sides have submitted. */
+export function resolveIfReady(
+  room: Room,
+  rng: RNG,
+): { room: Room; events: BattleEvent[] } | null {
+  const awaiting = awaitingSlots(room);
+  if (awaiting.length === 0) return null;
+  const actions = awaiting.map((slot) => room.players[slot]?.pendingAction ?? null);
+  if (actions.some((a) => a === null)) return null;
+  return resolveDecision(room, rng, false);
+}
+
+/**
+ * Force-resolve the current decision point when the turn timer expires. Any
+ * awaited slot that hasn't submitted does nothing (or is auto-switched during a
+ * forced switch), and a timeout event is emitted for it.
+ */
+export function resolveOnTimeout(
+  room: Room,
+  rng: RNG,
+): { room: Room; events: BattleEvent[] } | null {
+  if (awaitingSlots(room).length === 0) return null;
+  return resolveDecision(room, rng, true);
 }
 
 export function applyDisconnect(room: Room, slot: SideIndex): Room {
@@ -242,7 +279,7 @@ function playerView(player: RoomPlayer | null): PlayerView | null {
   };
 }
 
-export function viewFor(room: Room, slot: SideIndex): RoomView {
+export function viewFor(room: Room, slot: SideIndex, turnDeadline: number | null = null): RoomView {
   return {
     roomId: room.id,
     phase: room.phase,
@@ -252,6 +289,7 @@ export function viewFor(room: Room, slot: SideIndex): RoomView {
     battle: room.battle,
     awaiting: awaitingSlots(room),
     submitted: [room.players[0]?.pendingAction != null, room.players[1]?.pendingAction != null],
+    turnDeadline,
     winnerSlot: room.winnerSlot,
   };
 }
