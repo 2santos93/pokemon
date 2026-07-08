@@ -82,7 +82,7 @@ export function BattleRoom({ roomId }: { roomId: string }) {
   if (view.phase === "battle") {
     return (
       <Shell wide>
-        <BattleScene view={view} />
+        <BattleScene view={view} events={events} />
         <BattleLog view={view} events={events} />
         <ActionMenu view={view} send={send} />
       </Shell>

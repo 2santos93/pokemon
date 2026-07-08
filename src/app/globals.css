@@ -213,6 +213,138 @@ body {
   animation: boot-flicker 0.6s ease-out both;
 }
 
+/* ------------------------------------------------------------------ */
+/* Battle scene "juice": send-out and attack animations                */
+/* ------------------------------------------------------------------ */
+
+/* Pokémon sprite emerging after a send-out (mount/switch). */
+@keyframes sprite-emerge {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Poké Ball "open" burst shown briefly at the send-out anchor. */
+@keyframes pokeball-burst {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  30% {
+    transform: scale(1.4);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.7);
+    opacity: 0;
+  }
+}
+
+/* Attacker lunge — bottom sprite (player) lunges up-right toward the opponent. */
+@keyframes attack-lunge-player {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(10px, -10px);
+  }
+}
+
+/* Attacker lunge — top sprite (foe) lunges down-left toward the player. */
+@keyframes attack-lunge-foe {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-10px, 10px);
+  }
+}
+
+/* Hit reaction: quick horizontal shake. */
+@keyframes hit-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+/* Hit reaction: bright white flash settling into a red-tinted glow. */
+@keyframes hit-flash {
+  0%,
+  100% {
+    filter: brightness(1) saturate(1);
+  }
+  30% {
+    filter: brightness(2.2) saturate(0) drop-shadow(0 0 6px rgba(255, 255, 255, 0.9));
+  }
+  65% {
+    filter: brightness(1.4) saturate(1) drop-shadow(0 0 5px rgba(255, 70, 70, 0.85));
+  }
+}
+
+/* Faint: drop and fade before the sprite is replaced. */
+@keyframes faint-drop {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+
+.animate-sprite-emerge {
+  animation: sprite-emerge 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.animate-pokeball-burst {
+  animation: pokeball-burst 0.5s ease-out both;
+}
+
+.animate-attack-lunge-player {
+  animation: attack-lunge-player 0.25s ease-in-out;
+}
+
+.animate-attack-lunge-foe {
+  animation: attack-lunge-foe 0.25s ease-in-out;
+}
+
+.animate-hit-shake {
+  animation: hit-shake 0.3s ease-in-out;
+}
+
+.animate-hit-flash {
+  animation: hit-flash 0.3s ease-in-out;
+}
+
+.animate-faint-drop {
+  animation: faint-drop 0.4s ease-in both;
+}
+
 /* Keyboard users get a clearly visible focus indicator; pointer users are unaffected. */
 :focus-visible {
   outline: 2px solid var(--scan);
