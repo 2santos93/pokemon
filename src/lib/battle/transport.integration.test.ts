@@ -33,7 +33,8 @@ function start(): Promise<number> {
   });
   server.on("connection", (socket) => {
     const roomId = String(socket.handshake.query.roomId);
-    const slot = battle.join(roomId);
+    const token = String(socket.handshake.query.token ?? "");
+    const slot = battle.join(roomId, token);
     if (slot === null) return;
     socket.join(`${roomId}:${slot}`);
     socket.emit("assigned", { slot });
@@ -45,8 +46,8 @@ function start(): Promise<number> {
   return new Promise((resolve) => http.listen(0, () => resolve((http.address() as { port: number }).port)));
 }
 
-function connect(port: number): Socket {
-  const s = ioClient(`http://localhost:${port}`, { query: { roomId: "r" } });
+function connect(port: number, token: string): Socket {
+  const s = ioClient(`http://localhost:${port}`, { query: { roomId: "r", token } });
   sockets.push(s);
   return s;
 }
@@ -66,8 +67,8 @@ function waitFor<T>(socket: Socket, event: string, predicate: (payload: T) => bo
 describe("battle transport integration", () => {
   it("drives two clients through lobby → teams → lead → a resolved turn", async () => {
     const port = await start();
-    const a = connect(port);
-    const b = connect(port);
+    const a = connect(port, "tokA");
+    const b = connect(port, "tokB");
 
     // Register every listener before the connection handshake completes:
     // the server emits "assigned" and the initial state "message" back to

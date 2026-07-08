@@ -123,14 +123,35 @@ describe("BattleServer", () => {
     expect(afterSwitch.view.battle?.forcedSwitch[1]).toBe(false);
   });
 
-  it("forfeits to the opponent on disconnect mid-game", async () => {
+  it("marks a player disconnected without ending the game", async () => {
     const { server, sent } = harness();
     server.join("r"); server.join("r");
     await server.message("r", 0, { type: "setProfile", nickname: "Ash", gender: "male" });
     await server.message("r", 1, { type: "setProfile", nickname: "Misty", gender: "female" });
     server.disconnect("r", 1);
+    const lastForSlot0 = sent.filter((s) => s.msg.type === "state" && s.slot === 0).at(-1)!;
+    expect(lastForSlot0.msg.type === "state" && lastForSlot0.msg.view.winnerSlot).toBeNull();
+    expect(lastForSlot0.msg.type === "state" && lastForSlot0.msg.view.phase).not.toBe("finished");
+    expect(lastForSlot0.msg.type === "state" && lastForSlot0.msg.view.players[1]?.connected).toBe(false);
+  });
+
+  it("forfeits to the opponent on an explicit forfeit message", async () => {
+    const { server, sent } = harness();
+    server.join("r"); server.join("r");
+    await server.message("r", 0, { type: "setProfile", nickname: "Ash", gender: "male" });
+    await server.message("r", 1, { type: "setProfile", nickname: "Misty", gender: "female" });
+    await server.message("r", 1, { type: "forfeit" });
     const last = sent.filter((s) => s.msg.type === "state").at(-1)!;
     expect(last.msg.type === "state" && last.msg.view.winnerSlot).toBe(0);
+    expect(last.msg.type === "state" && last.msg.view.phase).toBe("finished");
+  });
+
+  it("reconnects with a matching token to reclaim the same slot", async () => {
+    const { server } = harness();
+    server.join("r", "a");
+    server.join("r", "b");
+    server.disconnect("r", 0);
+    expect(server.join("r", "a")).toBe(0);
   });
 
   it("guards against a concurrent duplicate team roll while one is in flight", async () => {

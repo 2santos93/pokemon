@@ -3,6 +3,7 @@ import type { BattlePokemon, Move, MoveSlot } from "./types";
 import {
   applyAction,
   applyDisconnect,
+  applyForfeit,
   applyLead,
   applyProfile,
   awaitingSlots,
@@ -75,6 +76,30 @@ describe("room lobby", () => {
     const room = joined();
     applyProfile(room, 0, "Ash", "male");
     expect(room.players[0]?.nickname).toBeNull();
+  });
+
+  it("reconnects a disconnected player to their original slot via a matching token", () => {
+    let room = createRoom("r1");
+    const a = joinRoom(room, "tok-a");
+    room = (a as { room: typeof room }).room;
+    expect("slot" in a && a.slot).toBe(0);
+    const b = joinRoom(room, "tok-b");
+    room = (b as { room: typeof room }).room;
+    expect("slot" in b && b.slot).toBe(1);
+    expect(room.phase).toBe("lobby");
+
+    room = applyDisconnect(room, 0);
+    expect(room.players[0]?.connected).toBe(false);
+
+    const phaseBeforeReconnect = room.phase;
+    const reconnect = joinRoom(room, "tok-a");
+    expect("slot" in reconnect && reconnect.slot).toBe(0);
+    room = (reconnect as { room: typeof room }).room;
+    expect(room.players[0]?.connected).toBe(true);
+    expect(room.phase).toBe(phaseBeforeReconnect);
+
+    const thirdDistinctToken = joinRoom(room, "tok-c");
+    expect("error" in thirdDistinctToken).toBe(true);
   });
 });
 
@@ -242,10 +267,25 @@ describe("room turn sync", () => {
 });
 
 describe("room disconnect / rematch / view", () => {
-  it("awards a forfeit win when a player disconnects mid-battle", () => {
-    const room = applyDisconnect(battling(), 1);
+  it("applyDisconnect only marks the player disconnected, without ending the battle", () => {
+    const before = battling();
+    const room = applyDisconnect(before, 1);
+    expect(room.players[1]?.connected).toBe(false);
+    expect(room.phase).toBe(before.phase);
+    expect(room.winnerSlot).toBeNull();
+  });
+
+  it("applyForfeit awards the win to the opponent mid-battle", () => {
+    const room = applyForfeit(battling(), 1);
     expect(room.phase).toBe("finished");
     expect(room.winnerSlot).toBe(0);
+  });
+
+  it("applyForfeit is a no-op once the room is already finished", () => {
+    const finished = applyForfeit(battling(), 1);
+    const again = applyForfeit(finished, 0);
+    expect(again.winnerSlot).toBe(0);
+    expect(again.phase).toBe("finished");
   });
 
   it("resetForRematch returns to lobby keeping profiles and re-arming the roll", () => {

@@ -12,6 +12,7 @@ export interface RoomPlayer {
   team: BattlePokemon[] | null;
   lead: number | null;
   pendingAction: TurnAction | null;
+  token?: string;
 }
 
 export interface Room {
@@ -26,18 +27,30 @@ export function createRoom(id: string): Room {
   return { id, phase: "waiting", players: [null, null], battle: null, winnerSlot: null };
 }
 
-function newPlayer(slot: SideIndex): RoomPlayer {
+function newPlayer(slot: SideIndex, token?: string): RoomPlayer {
   return {
     slot, nickname: null, gender: null, connected: true,
-    team: null, lead: null, pendingAction: null,
+    team: null, lead: null, pendingAction: null, token,
   };
 }
 
-export function joinRoom(room: Room): { room: Room; slot: SideIndex } | { error: string } {
+export function joinRoom(
+  room: Room,
+  token?: string,
+): { room: Room; slot: SideIndex } | { error: string } {
+  if (token) {
+    for (const player of room.players) {
+      if (player && player.token === token) {
+        const next = structuredClone(room);
+        next.players[player.slot]!.connected = true;
+        return { room: next, slot: player.slot };
+      }
+    }
+  }
   const slot: SideIndex | null = room.players[0] === null ? 0 : room.players[1] === null ? 1 : null;
   if (slot === null) return { error: "room full" };
   const next = structuredClone(room);
-  next.players[slot] = newPlayer(slot);
+  next.players[slot] = newPlayer(slot, token);
   if (next.players[0] && next.players[1]) next.phase = "lobby";
   return { room: next, slot };
 }
@@ -189,12 +202,16 @@ export function resolveIfReady(
 export function applyDisconnect(room: Room, slot: SideIndex): Room {
   const next = structuredClone(room);
   if (next.players[slot]) next.players[slot]!.connected = false;
+  return next;
+}
+
+export function applyForfeit(room: Room, slot: SideIndex): Room {
   const other: SideIndex = slot === 0 ? 1 : 0;
-  const battleInProgress = next.phase === "lobby" || next.phase === "teaming" || next.phase === "battle";
-  if (battleInProgress && next.players[other]) {
-    next.phase = "finished";
-    next.winnerSlot = other;
-  }
+  const battleInProgress = room.phase === "lobby" || room.phase === "teaming" || room.phase === "battle";
+  if (!battleInProgress || !room.players[other]) return room;
+  const next = structuredClone(room);
+  next.phase = "finished";
+  next.winnerSlot = other;
   return next;
 }
 

@@ -12,7 +12,11 @@ const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
   const httpServer = createServer((req, res) => handle(req, res));
-  const io = new SocketServer(httpServer, { path: "/socket.io" });
+  const io = new SocketServer(httpServer, {
+    path: "/socket.io",
+    pingTimeout: 60000,
+    pingInterval: 25000,
+  });
 
   const battle = new BattleServer({
     rollTeam: (rng) => rollBattleTeam(rng),
@@ -25,7 +29,8 @@ app.prepare().then(() => {
       socket.disconnect(true);
       return;
     }
-    const slot = battle.join(roomId);
+    const token = String(socket.handshake.query.token ?? "");
+    const slot = battle.join(roomId, token);
     if (slot === null) {
       socket.emit("message", { type: "error", message: "room full" });
       socket.disconnect(true);

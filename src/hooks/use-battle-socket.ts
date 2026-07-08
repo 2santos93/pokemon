@@ -13,7 +13,13 @@ export function useBattleSocket(roomId: string) {
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    const socket = io({ query: { roomId }, path: "/socket.io" });
+    const tokenKey = `battle-token:${roomId}`;
+    let token = sessionStorage.getItem(tokenKey);
+    if (!token) {
+      token = crypto.randomUUID();
+      sessionStorage.setItem(tokenKey, token);
+    }
+    const socket = io({ query: { roomId, token }, path: "/socket.io" });
     socketRef.current = socket;
     socket.on("assigned", (data: { slot: SideIndex }) => setSlot(data.slot));
     socket.on("message", (msg: ServerMessage) => {

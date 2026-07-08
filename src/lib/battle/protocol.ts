@@ -19,7 +19,8 @@ export type ClientMessage =
   | { type: "setProfile"; nickname: string; gender: Gender }
   | { type: "chooseLead"; teamIndex: number }
   | { type: "action"; action: TurnAction }
-  | { type: "rematch" };
+  | { type: "rematch" }
+  | { type: "forfeit" };
 
 export interface PlayerView {
   slot: SideIndex;

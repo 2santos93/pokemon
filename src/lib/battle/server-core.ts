@@ -2,7 +2,7 @@ import { legalActions } from "./engine";
 import { createRng as defaultCreateRng, type RNG } from "./rng";
 import type { ClientMessage, RoomView, ServerMessage } from "./protocol";
 import {
-  applyAction, applyDisconnect, applyLead, applyProfile, awaitingSlots,
+  applyAction, applyDisconnect, applyForfeit, applyLead, applyProfile, awaitingSlots,
   createRoom, joinRoom, needsTeamRoll, readyToStart, resetForRematch,
   resolveIfReady, startBattle, viewFor as roomViewFor, withTeams, type Room,
 } from "./room";
@@ -28,14 +28,14 @@ export class BattleServer {
 
   constructor(private readonly deps: ServerDeps) {}
 
-  join(roomId: string): SideIndex | null {
+  join(roomId: string, token?: string): SideIndex | null {
     let entry = this.rooms.get(roomId);
     if (!entry) {
       const make = this.deps.createRng ?? defaultCreateRng;
       entry = { room: createRoom(roomId), rng: make(this.seq++), rolling: false };
       this.rooms.set(roomId, entry);
     }
-    const result = joinRoom(entry.room);
+    const result = joinRoom(entry.room, token);
     if ("error" in result) return null;
     entry.room = result.room;
     this.broadcast(roomId);
@@ -76,6 +76,10 @@ export class BattleServer {
         entry.room = resetForRematch(entry.room);
         this.broadcast(roomId);
         if (needsTeamRoll(entry.room)) await this.rollTeams(roomId);
+        break;
+      case "forfeit":
+        entry.room = applyForfeit(entry.room, slot);
+        this.broadcast(roomId);
         break;
     }
   }

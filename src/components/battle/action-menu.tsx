@@ -38,6 +38,7 @@ export function ActionMenu({
 
   const runAway = () => {
     if (window.confirm(d.battle.runConfirm)) {
+      send({ type: "forfeit" });
       router.push("/");
     }
   };
