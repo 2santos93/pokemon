@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BackLink } from "@/components/pokedex/back-link";
@@ -16,10 +17,25 @@ interface DetailPageProps {
   params: Promise<{ id: string }>;
 }
 
-export async function generateMetadata({ params }: DetailPageProps) {
+export async function generateMetadata({ params }: DetailPageProps): Promise<Metadata> {
   const { id } = await params;
   const detail = await getPokemonDetail(Number(id));
-  return { title: detail ? `${detail.name} — Pokédex` : "Pokédex" };
+  if (!detail) return { title: "Pokédex" };
+
+  const locale = await getLocale();
+  const title = `${detail.name} — Pokédex`;
+  const description = detail.flavorText[locale] || detail.genus[locale];
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      images: [{ url: detail.imageUrl, width: 475, height: 475, alt: detail.name }],
+    },
+    twitter: { card: "summary_large_image", title, description },
+  };
 }
 
 export default async function PokemonDetailPage({ params }: DetailPageProps) {
@@ -37,11 +53,11 @@ export default async function PokemonDetailPage({ params }: DetailPageProps) {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <BackLink />
-        <div className="flex gap-2 text-sm font-semibold">
+        <div className="readout flex gap-2 text-xs font-bold">
           {id > 1 && (
             <Link
               href={`/pokemon/${id - 1}`}
-              className="rounded-full bg-[var(--surface-raised)] px-4 py-1.5 hover:bg-white/10"
+              className="rounded-lg border border-white/10 bg-[var(--surface-raised)] px-4 py-2 transition-colors hover:border-[var(--scan)]/50 hover:bg-white/10"
             >
               ← {d.detail.previous}
             </Link>
@@ -49,7 +65,7 @@ export default async function PokemonDetailPage({ params }: DetailPageProps) {
           {id < detail.maxId && (
             <Link
               href={`/pokemon/${id + 1}`}
-              className="rounded-full bg-[var(--surface-raised)] px-4 py-1.5 hover:bg-white/10"
+              className="rounded-lg border border-white/10 bg-[var(--surface-raised)] px-4 py-2 transition-colors hover:border-[var(--scan)]/50 hover:bg-white/10"
             >
               {d.detail.next} →
             </Link>
@@ -59,8 +75,8 @@ export default async function PokemonDetailPage({ params }: DetailPageProps) {
       <DetailHero detail={detail} />
       <div className="grid gap-6 lg:grid-cols-2">
         <StatsPanel stats={detail.stats} />
-        <section className="rounded-2xl border border-white/5 bg-[var(--surface)] p-5">
-          <h2 className="mb-4 text-sm font-black uppercase tracking-wider text-[var(--muted)]">
+        <section className="rounded-2xl border border-white/10 bg-black/25 p-5">
+          <h2 className="readout mb-4 text-[11px] font-black uppercase tracking-widest text-[var(--scan)]">
             {d.detail.evolutions}
           </h2>
           <EvolutionChain stages={detail.evolutionStages} currentId={detail.id} />

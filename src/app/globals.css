@@ -1,31 +1,145 @@
 @import "tailwindcss";
 
 :root {
-  --pokedex-red: #dc0a2d;
-  --pokedex-red-dark: #a30823;
-  --background: #0a0f1e;
+  /* Physical device shell */
+  --pokedex-red: #e3350d;
+  --pokedex-red-dark: #a5220a;
+  --pokedex-red-light: #ff5a36;
+  --shell-shadow: rgba(60, 8, 0, 0.55);
+
+  /* Screen (the LCD the content lives on) */
+  --background: #070b16;
+  --screen: #0b1020;
+  --screen-raised: #121a30;
   --surface: #111831;
   --surface-raised: #1a2342;
+  --bezel: #05070f;
+
+  /* Readouts */
   --foreground: #e7ecf7;
   --muted: #8b94ad;
+  --scan: #38bdf8;
+  --scan-amber: #ffcf5c;
 }
 
 body {
   background:
-    radial-gradient(1200px 600px at 80% -10%, rgba(220, 10, 45, 0.12), transparent 60%),
-    radial-gradient(900px 500px at -10% 110%, rgba(59, 130, 246, 0.1), transparent 60%),
+    radial-gradient(1400px 700px at 82% -12%, rgba(227, 53, 13, 0.18), transparent 55%),
+    radial-gradient(1000px 560px at -12% 112%, rgba(56, 189, 248, 0.12), transparent 60%),
     var(--background);
   color: var(--foreground);
   min-height: 100dvh;
 }
 
+/* ------------------------------------------------------------------ */
+/* Device chrome                                                       */
+/* ------------------------------------------------------------------ */
+
+/* The red device shell that frames the whole app. Brushed radial sheen
+   + a hairline top highlight so it reads as molded plastic, not a flat fill. */
+.device-shell {
+  background:
+    radial-gradient(120% 90% at 15% -10%, rgba(255, 255, 255, 0.14), transparent 45%),
+    linear-gradient(180deg, var(--pokedex-red-light) 0%, var(--pokedex-red) 34%, var(--pokedex-red-dark) 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -6px 24px rgba(70, 6, 0, 0.55),
+    0 24px 60px -20px var(--shell-shadow);
+}
+
+/* Corner rivets / screws on the shell. */
+.rivet {
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.15) 40%, transparent 55%),
+    linear-gradient(135deg, #7d1806, #4d0f02);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.4),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.6),
+    0 1px 2px rgba(0, 0, 0, 0.4);
+}
+.rivet::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 8px;
+  height: 1.5px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 2px;
+  transform: rotate(35deg);
+}
+
+/* The LCD screen: an inset dark panel with a chunky bezel + inner shadow. */
+.screen {
+  position: relative;
+  background:
+    radial-gradient(140% 120% at 50% -20%, rgba(56, 189, 248, 0.08), transparent 55%),
+    linear-gradient(180deg, var(--screen-raised), var(--screen));
+  border: 1px solid rgba(120, 160, 220, 0.14);
+  box-shadow:
+    inset 0 2px 10px rgba(0, 0, 0, 0.7),
+    inset 0 0 0 6px var(--bezel),
+    inset 0 0 40px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+}
+
+/* Faint horizontal scanlines + a diagonal glare sweep across any .screen. */
+.screen-scanlines::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.035) 0px,
+    rgba(255, 255, 255, 0.035) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  pointer-events: none;
+  z-index: 5;
+  mix-blend-mode: overlay;
+}
+.screen-scanlines::after {
+  content: "";
+  position: absolute;
+  inset: -40% -10%;
+  background: linear-gradient(115deg, transparent 42%, rgba(255, 255, 255, 0.06) 50%, transparent 58%);
+  pointer-events: none;
+  z-index: 6;
+}
+
+/* Speaker grille (bottom-right of the classic device). */
+.grille {
+  background-image: radial-gradient(rgba(0, 0, 0, 0.45) 1.2px, transparent 1.3px);
+  background-size: 7px 7px;
+}
+
+/* Monospace readout text, LCD style. */
+.readout {
+  font-family: var(--font-pixel), var(--font-geist-mono), monospace;
+  letter-spacing: 0.04em;
+}
+
+/* ------------------------------------------------------------------ */
+/* Animations                                                         */
+/* ------------------------------------------------------------------ */
+
 @keyframes sensor-pulse {
   0%,
   100% {
-    box-shadow: 0 0 12px 2px rgba(56, 189, 248, 0.7);
+    box-shadow:
+      0 0 0 3px rgba(255, 255, 255, 0.5),
+      0 0 18px 4px rgba(120, 200, 255, 0.85),
+      inset 0 0 12px rgba(255, 255, 255, 0.6);
   }
   50% {
-    box-shadow: 0 0 22px 6px rgba(56, 189, 248, 0.35);
+    box-shadow:
+      0 0 0 3px rgba(255, 255, 255, 0.5),
+      0 0 34px 10px rgba(120, 200, 255, 0.45),
+      inset 0 0 12px rgba(255, 255, 255, 0.35);
   }
 }
 
@@ -52,6 +166,69 @@ body {
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-6px);
+    transform: translateY(-8px);
+  }
+}
+
+/* A cyan scan line that sweeps down a card/panel on hover or on mount. */
+@keyframes scan-sweep {
+  0% {
+    transform: translateY(-120%);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(220%);
+    opacity: 0;
+  }
+}
+
+@keyframes ring-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes boot-flicker {
+  0% {
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.6;
+  }
+  12% {
+    opacity: 0.2;
+  }
+  20%,
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-boot {
+  animation: boot-flicker 0.6s ease-out both;
+}
+
+/* Keyboard users get a clearly visible focus indicator; pointer users are unaffected. */
+:focus-visible {
+  outline: 2px solid var(--scan);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Honor the user's OS-level motion preference: collapse all decorative
+   animations and transitions to imperceptible durations. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
