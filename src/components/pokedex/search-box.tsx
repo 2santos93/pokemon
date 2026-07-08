@@ -16,21 +16,14 @@ export function SearchBox({
   const pushQuery = useDebouncedCallback(onQueryChange, 250);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Re-sync local value when the URL-derived query changes externally (e.g. "Clear
-  // filters" or browser back/forward), without remounting the input and losing focus.
-  // Only sync while the input is NOT focused: the URL push is debounced and
-  // router.replace is async, so while the user is actively typing, a re-render can
-  // carry the previous committed query in `initialQuery` (a "debounced URL echo").
-  // Syncing unconditionally would clobber the keystroke just typed and jump the
-  // cursor. Skipping the sync while focused avoids that; external changes still
-  // apply because they happen while the input is blurred.
+  // Sync only while unfocused: the URL push is debounced, so initialQuery lags behind
+  // by up to 250ms (a "debounced echo") and would clobber the keystroke just typed.
   useEffect(() => {
     if (document.activeElement === inputRef.current) return;
     setValue(initialQuery);
   }, [initialQuery]);
 
-  // Pressing "/" anywhere on the page focuses the search box (unless the user
-  // is already typing in a form field).
+  // "/" focuses the search box, unless already typing in a field.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "/" || event.metaKey || event.ctrlKey || event.altKey) return;

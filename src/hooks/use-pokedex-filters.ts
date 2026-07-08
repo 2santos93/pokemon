@@ -15,11 +15,8 @@ export function usePokedexFilters() {
 
   const filters = useMemo(() => parseFilters(new URLSearchParams(searchParams)), [searchParams]);
 
-  // Filtering is entirely client-side over the in-memory index, so URL sync must
-  // NOT trigger an RSC navigation. router.replace() would re-fetch this route's
-  // server component (which awaits the ~1000-entry PokéAPI index) and flash the
-  // loading.tsx skeleton — the "stuck loading" bug. The native History API does
-  // shallow routing: it updates the URL and useSearchParams without a round-trip.
+  // history.replaceState, not router.replace(): the latter re-runs this route's
+  // server component (the ~1000-entry index fetch) and flashes loading.tsx.
   const apply = useCallback(
     (next: PokedexFilters) => {
       const query = serializeFilters(next).toString();

@@ -31,8 +31,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={locale}>
       <head>
-        {/* The grid loads hundreds of artwork images from this host; warming the
-            connection saves a DNS+TLS round-trip on first paint. */}
+        {/* Warms the DNS+TLS handshake before the grid's hundreds of artwork requests. */}
         <link rel="preconnect" href="https://raw.githubusercontent.com" crossOrigin="anonymous" />
       </head>
       <body

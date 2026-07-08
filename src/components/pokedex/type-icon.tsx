@@ -1,8 +1,7 @@
 import type { CSSProperties } from "react";
 import type { TypeSlug } from "@/lib/domain/types";
 
-/** Compact, consistent glyph per Pokémon type. Uses currentColor so it can be
-    tinted with the type color (inactive) or white (active). */
+/** Compact per-type glyph; uses currentColor so callers can tint it via CSS. */
 const ICONS: Record<TypeSlug, React.ReactNode> = {
   normal: (
     <>

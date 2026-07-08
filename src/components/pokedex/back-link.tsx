@@ -7,9 +7,8 @@ import { LIST_URL_KEY } from "./session-keys";
 export function BackLink() {
   const router = useRouter();
   const { d } = useI18n();
-  // Always navigate to the list (with its last-known filters) instead of
-  // history.back(): after detail-to-detail navigation (evolutions, prev/next),
-  // "back" would land on the previous Pokémon rather than the Pokédex.
+  // router.push, not history.back(): after detail-to-detail navigation, back()
+  // would land on the previous Pokémon rather than the list.
   const goToList = () => {
     router.push(window.sessionStorage.getItem(LIST_URL_KEY) ?? "/");
   };

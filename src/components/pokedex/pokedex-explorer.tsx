@@ -22,20 +22,18 @@ function readStoredCount(): number {
 export function PokedexExplorer({ index }: { index: PokemonSummary[] }) {
   const { d } = useI18n();
   const { filters, setQuery, toggleType, toggleGeneration, clearAll } = usePokedexFilters();
-  // Start from the server-rendered page size to keep hydration deterministic, then
-  // restore any persisted scroll depth after mount (see effect below).
+  // Start at PAGE_SIZE for hydration determinism; restore persisted depth post-mount below.
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  // Guards the one-time post-mount restore below: without it, the persist branch
-  // would immediately overwrite sessionStorage with the initial PAGE_SIZE before
-  // the stored count had a chance to be read back in (hydration-safe restore).
+  // Guards the one-time restore: without it, the persist effect below would overwrite
+  // sessionStorage with PAGE_SIZE before the stored count is read back in.
   const restoredRef = useRef(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   const filtered = useMemo(() => filterPokemon(index, filters), [index, filters]);
   const visible = filtered.slice(0, visibleCount);
 
-  // Remember the current list URL (including active filters) so the detail
-  // page's back button can return here even after detail-to-detail navigation.
+  // Persist the list URL so the detail page's back button can return here
+  // even after detail-to-detail navigation.
   useEffect(() => {
     const query = serializeFilters(filters).toString();
     window.sessionStorage.setItem(LIST_URL_KEY, query === "" ? "/" : `/?${query}`);

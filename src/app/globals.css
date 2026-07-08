@@ -35,8 +35,7 @@ body {
 /* Device chrome                                                       */
 /* ------------------------------------------------------------------ */
 
-/* The red device shell that frames the whole app. Brushed radial sheen
-   + a hairline top highlight so it reads as molded plastic, not a flat fill. */
+/* Red device shell: radial sheen + top highlight reads as molded plastic, not a flat fill. */
 .device-shell {
   background:
     radial-gradient(120% 90% at 15% -10%, rgba(255, 255, 255, 0.14), transparent 45%),
@@ -221,8 +220,7 @@ body {
   border-radius: 4px;
 }
 
-/* Honor the user's OS-level motion preference: collapse all decorative
-   animations and transitions to imperceptible durations. */
+/* prefers-reduced-motion: collapse decorative animations/transitions to imperceptible durations. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
