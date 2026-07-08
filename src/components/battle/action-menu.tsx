@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import type { ClientMessage, RoomView } from "@/lib/battle/protocol";
 import { useI18n } from "@/lib/i18n/provider";
 import { TYPE_COLORS } from "@/components/pokedex/type-colors";
 import { HpBar } from "./hp-bar";
+import { BattleSprite } from "./battle-sprite";
 
 type Mode = "root" | "fight" | "switch";
 
@@ -21,10 +21,17 @@ export function ActionMenu({
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("root");
 
+  // Reset to the root menu whenever a fresh decision point begins: a new
+  // turn resolves, or a forced-switch sub-phase starts.
+  useEffect(() => {
+    setMode("root");
+  }, [view.battle?.turn, view.battle?.forcedSwitch[view.you]]);
+
   if (view.battle == null) return null;
 
   const myTurn = view.awaiting.includes(view.you);
-  if (!myTurn) {
+  const alreadySubmitted = view.submitted[view.you];
+  if (!myTurn || alreadySubmitted) {
     return (
       <div className="readout mt-3 rounded-xl border border-white/10 bg-[var(--surface)] px-4 py-3 text-center text-xs font-bold uppercase tracking-widest text-[var(--muted)]">
         {d.battle.opponentTurn}
@@ -58,14 +65,10 @@ export function ActionMenu({
               onClick={() => send({ type: "action", action: { kind: "switch", teamIndex } })}
               className="flex items-center gap-2 rounded-lg border border-white/10 bg-[var(--surface-raised)] p-2 text-left transition-colors hover:border-white/25"
             >
-              <Image
+              <BattleSprite
                 src={pokemon.frontSprite}
                 alt={pokemon.name}
-                width={32}
-                height={32}
-                unoptimized
                 className="h-8 w-8 shrink-0 object-contain"
-                style={{ imageRendering: "pixelated" }}
               />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-bold capitalize text-[var(--foreground)]">
@@ -80,6 +83,7 @@ export function ActionMenu({
           <button
             type="button"
             onClick={() => setMode("root")}
+            aria-label={d.battle.back}
             className="mt-2 w-full rounded-lg border border-white/10 py-1.5 text-xs font-bold uppercase tracking-wide text-[var(--muted)] transition-colors hover:border-white/25"
           >
             ←
@@ -125,6 +129,7 @@ export function ActionMenu({
         <button
           type="button"
           onClick={() => setMode("root")}
+          aria-label={d.battle.back}
           className="mt-2 w-full rounded-lg border border-white/10 py-1.5 text-xs font-bold uppercase tracking-wide text-[var(--muted)] transition-colors hover:border-white/25"
         >
           ←

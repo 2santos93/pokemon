@@ -90,7 +90,6 @@ export const en: Dictionary = {
     chooseLead: "Choose your lead",
     yourTeam: "Your team",
     waitingLead: "Waiting for the other trainer to choose…",
-    vs: "VS",
     lv: "Lv.",
     fight: "FIGHT",
     switchLabel: "POKÉMON",
@@ -99,7 +98,7 @@ export const en: Dictionary = {
     yourTurn: "What will you do?",
     opponentTurn: "Waiting for the opponent…",
     noPp: "No PP left!",
-    fainted: "Fainted",
+    back: "Back",
     status: {
       none: "",
       paralysis: "Paralyzed",

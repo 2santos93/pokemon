@@ -251,6 +251,7 @@ export function viewFor(room: Room, slot: SideIndex): RoomView {
     yourTeam: room.players[slot]?.team ?? null,
     battle: room.battle,
     awaiting: awaitingSlots(room),
+    submitted: [room.players[0]?.pendingAction != null, room.players[1]?.pendingAction != null],
     winnerSlot: room.winnerSlot,
   };
 }

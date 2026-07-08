@@ -40,6 +40,8 @@ export interface RoomView {
   yourTeam: BattlePokemon[] | null;
   battle: BattleState | null;
   awaiting: SideIndex[];
+  /** Whether each slot has a pending action locked in for the current decision point. */
+  submitted: [boolean, boolean];
   winnerSlot: SideIndex | null;
 }
 

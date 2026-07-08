@@ -48,7 +48,6 @@ export interface Dictionary {
     chooseLead: string;
     yourTeam: string;
     waitingLead: string;
-    vs: string;
     lv: string;
     fight: string;
     switchLabel: string;
@@ -57,7 +56,7 @@ export interface Dictionary {
     yourTurn: string;
     opponentTurn: string;
     noPp: string;
-    fainted: string;
+    back: string;
     status: Record<StatusCondition, string>;
     result: { victory: string; defeat: string; rematch: string; opponentLeft: string };
     log: {
