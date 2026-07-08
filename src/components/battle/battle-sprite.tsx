@@ -1,7 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+
+// Transient rate limiting/timeouts from the sprite source (raw.githubusercontent via the
+// Next image optimizer) usually clear up within a couple seconds, so retry a couple times
+// before giving up and showing the local fallback.
+const RETRY_DELAYS_MS = [600, 1500];
 
 export function BattleSprite({
   src,
@@ -13,11 +18,31 @@ export function BattleSprite({
   className?: string;
 }) {
   const [failed, setFailed] = useState(false);
+  const [retry, setRetry] = useState(0);
+  const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Reset on src change so a new sprite gets a fresh retry.
+  // Reset on src change so a new sprite gets a fresh set of retries.
   useEffect(() => {
     setFailed(false);
+    setRetry(0);
   }, [src]);
+
+  useEffect(() => {
+    return () => {
+      if (retryTimer.current != null) clearTimeout(retryTimer.current);
+    };
+  }, []);
+
+  const handleError = () => {
+    if (retry < RETRY_DELAYS_MS.length) {
+      const delay = RETRY_DELAYS_MS[retry]!;
+      retryTimer.current = setTimeout(() => {
+        setRetry((r) => r + 1);
+      }, delay);
+    } else {
+      setFailed(true);
+    }
+  };
 
   if (!src || failed) {
     // Local SVG fallback — avoids a broken-image icon on missing/rate-limited sprites.
@@ -38,11 +63,12 @@ export function BattleSprite({
 
   return (
     <Image
+      key={retry}
       src={src}
       alt={alt}
       width={128}
       height={128}
-      onError={() => setFailed(true)}
+      onError={handleError}
       className={className}
       style={{ imageRendering: "pixelated" }}
     />
