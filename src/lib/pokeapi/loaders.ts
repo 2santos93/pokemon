@@ -1,7 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { buildPokemonIndex } from "@/lib/domain/build-index";
 import { chainToStages, flattenChain, idFromUrl } from "@/lib/domain/evolution";
-import { formatPokemonName, officialArtworkUrl } from "@/lib/domain/format";
+import { formatPokemonName, officialArtworkUrl, toSpriteCdn } from "@/lib/domain/format";
 import {
   GENERATION_IDS,
   STAT_SLUGS,
@@ -102,9 +102,9 @@ export async function getPokemonDetail(id: number): Promise<PokemonDetail | null
         .sort((a, b) => a.slot - b.slot)
         .map((t) => t.type.name)
         .filter(isTypeSlug),
-      imageUrl:
-        pokemon.sprites.other?.["official-artwork"]?.front_default ??
-        officialArtworkUrl(pokemon.id),
+      imageUrl: pokemon.sprites.other?.["official-artwork"]?.front_default
+        ? toSpriteCdn(pokemon.sprites.other["official-artwork"].front_default)
+        : officialArtworkUrl(pokemon.id),
       stats: pokemon.stats.reduce<{ stat: StatSlug; value: number }[]>((acc, s) => {
         if (isStatSlug(s.stat.name)) acc.push({ stat: s.stat.name, value: s.base_stat });
         return acc;

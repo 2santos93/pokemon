@@ -5,6 +5,13 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
+        // Primary sprite host — same PokeAPI/sprites repo, no rate limiting.
+        protocol: "https",
+        hostname: "cdn.jsdelivr.net",
+        pathname: "/gh/PokeAPI/sprites**",
+      },
+      {
+        // Kept for any legacy/direct raw URLs that slip through.
         protocol: "https",
         hostname: "raw.githubusercontent.com",
         pathname: "/PokeAPI/sprites/**",

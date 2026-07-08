@@ -28,6 +28,21 @@ export function formatPokemonName(slug: string): string {
     .join(" ");
 }
 
+// PokeAPI serves its sprites from raw.githubusercontent.com, which aggressively
+// rate-limits (HTTP 429) once several images load at once — so sprites randomly
+// fail to appear during a battle or on the lead-select grid. jsDelivr mirrors the
+// exact same repo behind a globally-cached CDN with no such throttling, so we
+// route every sprite through it.
+const SPRITE_RAW_PREFIX = "https://raw.githubusercontent.com/PokeAPI/sprites/master";
+const SPRITE_CDN_PREFIX = "https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master";
+
+/** Rewrite a PokeAPI raw-sprite URL to its rate-limit-free jsDelivr mirror. */
+export function toSpriteCdn(url: string): string {
+  return url.startsWith(SPRITE_RAW_PREFIX)
+    ? SPRITE_CDN_PREFIX + url.slice(SPRITE_RAW_PREFIX.length)
+    : url;
+}
+
 export function officialArtworkUrl(id: number): string {
-  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+  return `${SPRITE_CDN_PREFIX}/sprites/pokemon/other/official-artwork/${id}.png`;
 }
